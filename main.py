@@ -1,10 +1,10 @@
 # the code to slice
-import cte
+# import cte
 import math
 import random
 import time
 
-class Arm_Slicer:
+class ArmSlicer:
   def __init__(self):
     self.gcode = []
 
@@ -55,16 +55,14 @@ class Circle:
         self.slice_start = slice_start
         self.slice_end = slice_end
     
-    def do(self):
+    def do_shape(self):
         pass
 
 
 
 
 def main():
-    arm = 
-
-    cte.wait(100, cte.MSEC)
+    arm = ArmSlicer()
 
     shape_commands = []
 
@@ -74,4 +72,5 @@ def main():
         command.do_shape()
 
 
-cte.cte_thread(main)
+# cte.cte_thread(main)
+main()
