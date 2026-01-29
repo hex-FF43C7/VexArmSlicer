@@ -72,7 +72,7 @@ cte.wait(1, cte.SECONDS)
           raise Exception(f'unknown gcode cmd "{sub_commands} on line {line+1}"')
 
     text = '\n'.join(answer)
-    if write_to_file is open:
+    if not write_to_file is None:
       write_to_file.write(text)
     return text
 
@@ -142,8 +142,9 @@ def main():
     for command in shape_commands:
         command.do_shape()
         
-    print(arm.gcode)
-    print(arm.get_gcode_commands())
+    # print(arm.gcode)
+    with open("end.txt", "w") as file:
+        print(arm.get_gcode_commands(write_to_file=file))
 
 
 # cte.cte_thread(main)
