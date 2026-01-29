@@ -149,8 +149,15 @@ def main():
     
     arm.set_end_effector_type(arm.PEN)
     shape_commands.append(DoLine(arm, (135+30, 158, 30), (135+30, 158, 0)))
-    shape_commands.append(Circle(arm, origin=(135, 158, 0), radius=30, resolution=60))
+    shape_commands.append(Circle(arm, origin=(135, 158, 0), radius=30, resolution=8))
     shape_commands.append(DoLine(arm, (135+30, 158, 0), (135+30, 158, 40)))
+    
+    shape_commands.append(DoLine(arm, (135+30+50, 158, 40), (135+30+50, 158, 40)))
+    
+    
+    shape_commands.append(DoLine(arm, (135+30+50, 158, 30), (135+30+50, 158, 0)))
+    shape_commands.append(Circle(arm, origin=(135+50, 158, 0), radius=30, resolution=120))
+    shape_commands.append(DoLine(arm, (135+30+50, 158, 0), (135+30+50, 158, 40)))
     
 
     
