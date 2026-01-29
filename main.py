@@ -3,7 +3,7 @@
 import math
 import random
 import time
-import regex
+# import regex
 
 class ArmSlicer:
   def __init__(self):
@@ -17,7 +17,7 @@ class ArmSlicer:
     self.valid_ends = [self.PEN, self.MAGNET]
 
   def set_end_effector_type(self, new_type):
-    if new_type is in self.valid_ends:
+    if new_type in self.valid_ends:
       self.gcode.append(f'EFF {new_type}')
       self.end_eff = new_type
     else:
@@ -28,15 +28,14 @@ class ArmSlicer:
 
   def get_gcode_commands(self, arm_object_name="arm", include_initilization=True):
     init_template = \
-    f"""
-    import cte
-    import time
-    {arm_object_name} = cte.arm()
-    """
+f"""import cte
+import time
+{arm_object_name} = cte.arm()
+"""
     answer = []
 
     if include_initilization:
-      anser.append(init_template)
+      answer.append(init_template)
 
     # DECODE START
     for line, command in enumerate(self.gcode):
@@ -49,16 +48,16 @@ class ArmSlicer:
       match sub_commands[0]:
         case 'G0':
           end_loc = dict()
-          for set_axis in sub_commands[1::]
-            if set_axis[0] in ("x", "Y", "Z"):
+          for set_axis in sub_commands[1::]:
+            if set_axis[0].upper() in ("X", "Y", "Z"):
               end_loc[set_axis[0]] = int(set_axis[1::])
             else:
-              raise Exception(f'Unknown component on line {line}, "{set_axis}"')
+              raise Exception(f'Unknown component on line {line+1}, "{set_axis}"')
           
-          answer.append(f"{arm_object_name}.move_to(x={end_lock['X']}, y={end_lock['Y']}, z={end_lock['Z']})")
+          answer.append(f"{arm_object_name}.move_to(x={end_loc['X']}, y={end_loc['Y']}, z={end_loc['Z']})")
         case 'G4':
           if len(sub_commands) != 2:
-            raise Exception(f'error on line {line}, G4 takes one argument, "{command.strip()}"')
+            raise Exception(f'error on line {line+1}, G4 takes one argument, "{command.strip()}"')
           else:
             match sub_commands[1][0]:
               case 'S':
@@ -69,17 +68,17 @@ class ArmSlicer:
         case 'EFF':
           answer.append(f"{arm_object_name}.set_end_effector_type({arm_object_name}.{sub_commands[-1]})")
         case _:
-          raise Exception(f'unknown gcode cmd "{sub_commands} on line {line}"')
-        
+          raise Exception(f'unknown gcode cmd "{sub_commands} on line {line+1}"')
+    return '\n'.join(answer)
 
   def write_to_file(self, file):
     file.write(self.get_gcode_str())
     
-  def arm_object.can_arm_reach_to(self, *args, **kwargs):
+  def can_arm_reach_to(self, *args, **kwargs):
     # someday I'll work out what the bounds of the bot are, but for now just assume its okay
     return True
   
-  def move_to(self, x=None, y=None, z=None, w=0)
+  def move_to(self, x=None, y=None, z=None, w=0):
 
     new_pos = [(self.pos[0] if x is None else x), (self.pos[1] if y is None else y), (self.pos[2] if z is None else z)]
     self.pos = new_pos
@@ -137,6 +136,9 @@ def main():
     
     for command in shape_commands:
         command.do_shape()
+        
+    print(arm.gcode)
+    print(arm.get_gcode_commands())
 
 
 # cte.cte_thread(main)
