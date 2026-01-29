@@ -57,19 +57,19 @@ class ArmSlicer:
           
           answer.append(f"{arm_object_name}.move_to(x={end_lock['X']}, y={end_lock['Y']}, z={end_lock['Z']})")
         case 'G4':
-          if len(sub_command) != 2:
+          if len(sub_commands) != 2:
             raise Exception(f'error on line {line}, G4 takes one argument, "{command.strip()}"')
           else:
-            match sub_command[1][0]:
+            match sub_commands[1][0]:
               case 'S':
-                answer.append(f"time.sleep({sub_command[1][1::]})")
+                answer.append(f"time.sleep({sub_commands[1][1::]})")
               case _:
-                raise Exception(f'unsuported at the moment "{sub_command[1][0]}" in "{command}" on line {line}')
+                raise Exception(f'unsuported at the moment "{sub_commands[1][0]}" in "{command}" on line {line}')
                 
         case 'EFF':
-          pass
+          answer.append(f"{arm_object_name}.set_end_effector_type({arm_object_name}.{sub_commands[-1]})")
         case _:
-          raise Exception(f'unknown gcode cmd "{sub_commands} on line {}"')
+          raise Exception(f'unknown gcode cmd "{sub_commands} on line {line}"')
         
 
   def write_to_file(self, file):
