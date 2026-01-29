@@ -26,7 +26,7 @@ class ArmSlicer:
   def get_gcode_str(self):
     return '\n'.join(self.gcode)
 
-  def get_gcode_commands(self, arm_object_name="arm", include_initilization=True):
+  def get_gcode_commands(self, arm_object_name="arm", include_initilization=True, write_to_file=None):
     init_template = \
 f"""import cte
 import time
@@ -70,7 +70,11 @@ cte.wait(1, cte.SECONDS)
           answer.append(f"{arm_object_name}.set_end_effector_type({arm_object_name}.{sub_commands[-1]})")
         case _:
           raise Exception(f'unknown gcode cmd "{sub_commands} on line {line+1}"')
-    return '\n'.join(answer)
+
+    text = '\n'.join(answer)
+    if write_to_file is open:
+      write_to_file.write(text)
+    return text
 
   def write_to_file(self, file):
     file.write(self.get_gcode_str())
