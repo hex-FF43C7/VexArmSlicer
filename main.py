@@ -30,7 +30,8 @@ class ArmSlicer:
     init_template = \
 f"""import cte
 import time
-{arm_object_name} = cte.arm()
+{arm_object_name} = cte.Arm()
+cte.wait(1, cte.SECONDS)
 """
     answer = []
 
