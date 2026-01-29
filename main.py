@@ -95,19 +95,18 @@ cte.wait(1, cte.SECONDS)
       self.gcode.append(f"G4 {w.upper()}")
 
 class DoLine:
-    def setup(self, arm_object, start_point, stop_point) -> None:
+    def __init__(self, arm_object, start_point, stop_point) -> None:
         self.start_p = start_point
         self.stop_p = stop_point
 
         self.arm_object = arm_object
-        self.arm_object.set_end_effector_type(self.arm_object.PEN)
+        # self.arm_object.set_end_effector_type(self.arm_object.PEN)
 
         if not self.arm_object.can_arm_reach_to(*self.start_p):
             raise Exception(f'cant reach start point {self.start_p}')
 
         if not self.arm_object.can_arm_reach_to(*self.stop_p):
             raise Exception(f'cant reach end point {self.start_p}')
-        return self
 
     def do_shape(self):
         self.arm_object.move_to(*self.start_p)
@@ -116,18 +115,29 @@ class DoLine:
 
 
 class Circle:
-    def __init__(self, arm, origin, radius, plane="z", slice_start=0, slice_end=360):
+    def __init__(self, arm, origin, radius, resolution=30, plane="z", slice_start=0, slice_end=360):
         self.arm = arm
-        self.arm.set_end_effector_type(self.arm.PEN)
+        # self.arm.set_end_effector_type(self.arm.PEN)
 
         self.origin = origin
         self.radius = radius
+        self.resolution = resolution
         self.plane = plane
         self.slice_start = slice_start
         self.slice_end = slice_end
     
     def do_shape(self):
-        pass
+      points = []
+      for i in range(self.resolution):
+          # Calculate the angle for each point, evenly spaced
+          angle = 2 * math.pi / self.resolution * i
+          
+          # Calculate coordinates using the parametric equations
+          x = self.origin[0] + self.radius * math.cos(angle)
+          y = self.origin[1] + self.radius * math.sin(angle)
+          
+          # points.append((x, y))
+          self.arm.move_to(x=int(round(x)), y=int(round(y)), z=self.origin[2])
 
 
 
@@ -136,8 +146,13 @@ def main():
     arm = ArmSlicer()
 
     shape_commands = []
+    
+    arm.set_end_effector_type(arm.PEN)
+    shape_commands.append(DoLine(arm, (135+30, 158, 30), (135+30, 158, 0)))
+    shape_commands.append(Circle(arm, origin=(135, 158, 0), radius=30, resolution=60))
+    shape_commands.append(DoLine(arm, (135+30, 158, 0), (135+30, 158, 40)))
+    
 
-    shape_commands.append(DoLine().setup(arm, (80, 80, 80), (120, 120, 120)))
     
     for command in shape_commands:
         command.do_shape()
