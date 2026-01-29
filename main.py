@@ -8,7 +8,7 @@ import regex
 class ArmSlicer:
   def __init__(self):
     self.gcode = []
-    self.pos = (0, 0, 0) # x y z
+    self.pos = [0, 0, 0] # x y z
     self.end_eff = ""
 
     self.PEN = "PEN"
@@ -18,6 +18,7 @@ class ArmSlicer:
 
   def set_end_effector_type(self, new_type):
     if new_type is in self.valid_ends:
+      self.gcode.append(f'EFF {new_type}')
       self.end_eff = new_type
     else:
       raise Exception(f"WTF IS DIS?? {new_type}")
@@ -29,6 +30,7 @@ class ArmSlicer:
     init_template = \
     f"""
     import cte
+    import time
     {arm_object_name} = cte.arm()
     """
     answer = []
@@ -36,9 +38,34 @@ class ArmSlicer:
     if include_initilization:
       anser.append(init_template)
 
-    for command in self.gcode:
-      pass # PUT DECODE STUFF HERE
-    
+    # DECODE START
+    for line, command in enumerate(self.gcode):
+      if command.strip() == '':
+        continue
+      sub_commands = command.strip().split(' ')
+      if len(sub_commands) <= 1:
+        continue
+      # DECODE LINE
+      match sub_commands[0]:
+        case 'G0':
+          end_loc = dict()
+          for set_axis in sub_commands[1::]
+            if set_axis[0] in ("x", "Y", "Z"):
+              end_loc[set_axis[0]] = int(set_axis[1::])
+            else:
+              raise Exception(f'Unknown component on line {line}, "{set_axis}"')
+          
+          answer.append(f"{arm_object_name}.move_to(x={end_lock['X']}, y={end_lock['Y']}, z={end_lock['Z']})")
+        case 'G4':
+          if len(sub_command) != 2:
+            raise Exception(f'error on line {line}, G4 takes one argument, "{command.strip()}"')
+          else:
+            pass
+        case 'EFF':
+          pass
+        case _:
+          raise Exception(f'unknown gcode cmd "{sub_commands} on line {}"')
+        
 
   def write_to_file(self, file):
     file.write(self.get_gcode_str())
@@ -48,7 +75,12 @@ class ArmSlicer:
     return True
   
   def move_to(self, x=None, y=None, z=None, w=0)
-    cmd_tmp = f"X{self.pos[0] if x is None else x} Y{self.pos[1] if y is None else y} Z{self.pos[2] if z is None else z}"
+
+    new_pos = [(self.pos[0] if x is None else x), (self.pos[1] if y is None else y), (self.pos[2] if z is None else z)]
+    self.pos = new_pos
+
+    cmd_tmp = f"X{new_pos[0]} Y{new_pos[1]} Z{new_pos[2]}"
+    
     self.gcode.append(f"G0 {cmd_tmp}")
     if w != 0:
       self.gcode.append(f"G4 {w.upper()}")
