@@ -60,7 +60,12 @@ class ArmSlicer:
           if len(sub_command) != 2:
             raise Exception(f'error on line {line}, G4 takes one argument, "{command.strip()}"')
           else:
-            pass
+            match sub_command[1][0]:
+              case 'S':
+                answer.append(f"time.sleep({sub_command[1][1::]})")
+              case _:
+                raise Exception(f'unsuported at the moment "{sub_command[1][0]}" in "{command}" on line {line}')
+                
         case 'EFF':
           pass
         case _:
