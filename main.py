@@ -147,7 +147,29 @@ class Circle:
           # points.append((x, y))
           self.arm.move_to(x=int(round(x)), y=int(round(y)), z=self.origin[2])
 
-def TravelSafe:
+class ClosedPollygon:
+  def __init__(self, arm, points):
+    self.points = points #[[x, y, z], [...]]
+    self.arm = arm
+    self.start_p = points[0]
+  
+  def do_shape(self):
+    for point in self.points:
+      self.arm.move_to(*point)
+    self.arm.move_to(*self.start_p)
+
+class MultiPointLine:
+  def __init__(self, arm, points):
+    self.points = points #[[x, y, z], [...]]
+    self.arm = arm
+    self.start_p = points[0]
+  
+  def do_shape(self):
+    for point in self.points:
+      self.arm.move_to(*point)
+
+
+class TravelSafe:
   def __init__(self, shape, draw_h, travel_h):
     self.shape = shape
     self.draw_h = draw_h
