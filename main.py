@@ -204,20 +204,18 @@ def main():
     TRAVEL_HIGHT = 30
     
     arm.set_end_effector_type(arm.PEN)
-    shape_commands.append(DoLine(arm, (135+30, 158, TRAVEL_HIGHT), (135+30, 158, DRAW_HIGHT)))
-    shape_commands.append(Circle(arm, origin=(135, 158, DRAW_HIGHT), radius=30, resolution=8))
-    shape_commands.append(DoLine(arm, (135+30, 158, DRAW_HIGHT), (135+30, 158, TRAVEL_HIGHT)))
+
+    shape_commands.append(TravelSafe(
+      shape=Circle(arm, origin=(135, 158, DRAW_HIGHT), radius=30, resolution=8)), 
+      draw_h=DRAW_HIGHT,
+      travel_h=TRAVEL_HIGHT
+    )
     
-    shape_commands.append(DoLine(arm, (135+30+50, 158, TRAVEL_HIGHT), (135+30+50, 158, TRAVEL_HIGHT)))
-    
-    
-    # shape_commands.append(DoLine(arm, (135+30+50, 158, TRAVEL_HIGHT), (135+30+50, 158, DRAW_HIGHT)))
     shape_commands.append(TravelSafe(
       shape=Circle(arm, origin=(135+50, 158, DRAW_HIGHT), radius=30, resolution=120), 
       draw_h=DRAW_HIGHT, 
       travel_h=TRAVEL_HIGHT
     ))
-    # shape_commands.append(DoLine(arm, (135+30+50, 158, DRAW_HIGHT), (135+30+50, 158, TRAVEL_HIGHT)))
     
 
     
