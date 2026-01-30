@@ -94,6 +94,13 @@ cte.wait(1, cte.SECONDS)
     if w != 0:
       self.gcode.append(f"G4 {w.upper()}")
 
+    def move_inc(self, x=0, y=0, z=0):
+      self.move_to(
+        x=self.pos[0]+x, 
+        y=self.pos[1]+y, 
+        z=self.pos[2]+z
+      )
+
 class DoLine:
     def __init__(self, arm_object, start_point, stop_point) -> None:
         self.start_p = start_point
@@ -115,16 +122,17 @@ class DoLine:
 
 
 class Circle:
-    def __init__(self, arm, origin, radius, resolution=30, plane="z", slice_start=0, slice_end=360):
+    def __init__(self, arm, origin, radius, resolution=30, slice_start=0, slice_end=360):
         self.arm = arm
         # self.arm.set_end_effector_type(self.arm.PEN)
 
         self.origin = origin
         self.radius = radius
         self.resolution = resolution
-        self.plane = plane
+        # self.plane = plane
         self.slice_start = slice_start
         self.slice_end = slice_end
+        self.start_p = [origin[0]+radius, origin[1], origin[2]]
     
     def do_shape(self):
       points = []
@@ -139,25 +147,55 @@ class Circle:
           # points.append((x, y))
           self.arm.move_to(x=int(round(x)), y=int(round(y)), z=self.origin[2])
 
+def TravelSafe:
+  def __init__(self, shape, draw_h, travel_h):
+    self.shape = shape
+    self.draw_h = draw_h
+    self.travel_h = travel_h
 
+  def do_shape(self):
+    self.shape.arm.move_to(
+      x=self.shape.start_p[0],
+      y=self.shape.start_p[1],
+      z=self.travel_h
+    )
+    self.shape.arm.move_to(
+      x=self.shape.start_p[0]
+      y=self.shape.start_p[1]
+      z=self.draw_h
+    )
+    
+    self.shape.do_shape()
+    
+    self.shape.arm.move_inc(z=self.travel_h)
+
+
+    
 
 
 def main():
     arm = ArmSlicer()
 
     shape_commands = []
+
+    DRAW_HIGHT = 1
+    TRAVEL_HIGHT = 30
     
     arm.set_end_effector_type(arm.PEN)
-    shape_commands.append(DoLine(arm, (135+30, 158, 30), (135+30, 158, 0)))
-    shape_commands.append(Circle(arm, origin=(135, 158, 0), radius=30, resolution=8))
-    shape_commands.append(DoLine(arm, (135+30, 158, 0), (135+30, 158, 40)))
+    shape_commands.append(DoLine(arm, (135+30, 158, TRAVEL_HIGHT), (135+30, 158, DRAW_HIGHT)))
+    shape_commands.append(Circle(arm, origin=(135, 158, DRAW_HIGHT), radius=30, resolution=8))
+    shape_commands.append(DoLine(arm, (135+30, 158, DRAW_HIGHT), (135+30, 158, TRAVEL_HIGHT)))
     
-    shape_commands.append(DoLine(arm, (135+30+50, 158, 40), (135+30+50, 158, 40)))
+    shape_commands.append(DoLine(arm, (135+30+50, 158, TRAVEL_HIGHT), (135+30+50, 158, TRAVEL_HIGHT)))
     
     
-    shape_commands.append(DoLine(arm, (135+30+50, 158, 30), (135+30+50, 158, 0)))
-    shape_commands.append(Circle(arm, origin=(135+50, 158, 0), radius=30, resolution=120))
-    shape_commands.append(DoLine(arm, (135+30+50, 158, 0), (135+30+50, 158, 40)))
+    # shape_commands.append(DoLine(arm, (135+30+50, 158, TRAVEL_HIGHT), (135+30+50, 158, DRAW_HIGHT)))
+    shape_commands.append(TravelSafe(
+      shape=Circle(arm, origin=(135+50, 158, DRAW_HIGHT), radius=30, resolution=120), 
+      draw_h=DRAW_HIGHT, 
+      travel_h=TRAVEL_HIGHT
+    ))
+    # shape_commands.append(DoLine(arm, (135+30+50, 158, DRAW_HIGHT), (135+30+50, 158, TRAVEL_HIGHT)))
     
 
     
