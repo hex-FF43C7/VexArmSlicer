@@ -168,6 +168,31 @@ class MultiPointLine:
     for point in self.points:
       self.arm.move_to(*point)
 
+class Rectangle:
+  def __init__(self, arm, point1, point2):
+    self.arm = arm
+    self.start_p = point1
+    self.point1 = point1
+    self.point2 = point2
+
+  def do_shape(self):
+    self.arm.move_to(*self.start_p)
+
+    self.arm.move_to(
+      x=self.point2[0]
+      y=self.point1[1]
+      z=self.point1[2]
+    )
+
+    self.arm.move_to(*self.point2)
+
+    self.arm.move_to(
+      x=self.point1[0]
+      y=self.point2[1]
+      z=self.point1[2]
+    )
+
+    self.arm.move_to(*self.start_p)
 
 class TravelSafe:
   def __init__(self, shape, draw_h, travel_h):
