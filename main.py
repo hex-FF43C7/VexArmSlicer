@@ -116,8 +116,6 @@ class DoLine:
         self.arm_object.move_to(*self.start_p)
         self.arm_object.move_to(*self.stop_p)
 
-
-
 class Circle:
     def __init__(self, arm, origin, radius, resolution=30, slice_start=0, slice_end=360, overlap=None):
         self.arm = arm
@@ -222,9 +220,6 @@ class TravelSafe:
     self.shape.arm.move_inc(z=self.travel_h)
 
 
-    
-
-
 def main():
     arm = ArmSlicer()
 
@@ -236,16 +231,28 @@ def main():
     arm.set_end_effector_type(arm.PEN)
 
     shape_commands.append(TravelSafe(
+      shape=Rectangle(arm, [100, 170, DRAW_HIGHT], [200, 100, DRAW_HIGHT]),
+      draw_h=DRAW_HIGHT,
+      travel_h=TRAVEL_HIGHT
+    ))
+
+    shape_commands.append(TravelSafe(
+      shape=ClosedPollygon(arm, [[130, 150, DRAW_HIGHT], [185, 185, DRAW_HIGHT], [170, 80, DRAW_HIGHT]]),
+      draw_h=DRAW_HIGHT,
+      travel_h=TRAVEL_HIGHT
+    ))
+    
+    shape_commands.append(TravelSafe(
       shape=Circle(arm, origin=(135, 158, DRAW_HIGHT), radius=30, resolution=8), 
       draw_h=DRAW_HIGHT,
       travel_h=TRAVEL_HIGHT
     ))
     
     shape_commands.append(TravelSafe(
-      shape=Circle(arm, origin=(135+50, 158, DRAW_HIGHT), radius=30, resolution=120), 
+      shape=Circle(arm, origin=(200, 70, DRAW_HIGHT), radius=30, resolution=120), 
       draw_h=DRAW_HIGHT, 
       travel_h=TRAVEL_HIGHT
-    ))
+    ))    
     
 
     
