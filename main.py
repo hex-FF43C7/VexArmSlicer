@@ -27,16 +27,13 @@ class ArmSlicer:
     return '\n'.join(self.gcode)
 
   def get_gcode_commands(self, arm_object_name="arm", include_initilization=True, write_to_file=None):
-    init_template = \
-f"""import cte
-import time
-{arm_object_name} = cte.Arm()
-cte.wait(1, cte.SECONDS)
-"""
     answer = []
 
     if include_initilization:
-      answer.append(init_template)
+      answer.append("import cte")
+      answer.append("import time")
+      answer.append(f"{arm_object_name} = cte.Arm()")
+      answer.append("cte.wait(1, cte.SECONDS)")
 
     # DECODE START
     for line, command in enumerate(self.gcode):
@@ -94,12 +91,12 @@ cte.wait(1, cte.SECONDS)
     if w != 0:
       self.gcode.append(f"G4 {w.upper()}")
 
-    def move_inc(self, x=0, y=0, z=0):
-      self.move_to(
-        x=self.pos[0]+x, 
-        y=self.pos[1]+y, 
-        z=self.pos[2]+z
-      )
+  def move_inc(self, x=0, y=0, z=0):
+    self.move_to(
+      x=self.pos[0]+x, 
+      y=self.pos[1]+y, 
+      z=self.pos[2]+z
+    )
 
 class DoLine:
     def __init__(self, arm_object, start_point, stop_point) -> None:
@@ -179,17 +176,17 @@ class Rectangle:
     self.arm.move_to(*self.start_p)
 
     self.arm.move_to(
-      x=self.point2[0]
-      y=self.point1[1]
-      z=self.point1[2]
+      x=self.point2[0],
+      y=self.point1[1],
+      z=self.point1[2],
     )
 
     self.arm.move_to(*self.point2)
 
     self.arm.move_to(
-      x=self.point1[0]
-      y=self.point2[1]
-      z=self.point1[2]
+      x=self.point1[0],
+      y=self.point2[1],
+      z=self.point1[2],
     )
 
     self.arm.move_to(*self.start_p)
@@ -204,12 +201,12 @@ class TravelSafe:
     self.shape.arm.move_to(
       x=self.shape.start_p[0],
       y=self.shape.start_p[1],
-      z=self.travel_h
+      z=self.travel_h,
     )
     self.shape.arm.move_to(
-      x=self.shape.start_p[0]
-      y=self.shape.start_p[1]
-      z=self.draw_h
+      x=self.shape.start_p[0],
+      y=self.shape.start_p[1],
+      z=self.draw_h,
     )
     
     self.shape.do_shape()
@@ -231,10 +228,10 @@ def main():
     arm.set_end_effector_type(arm.PEN)
 
     shape_commands.append(TravelSafe(
-      shape=Circle(arm, origin=(135, 158, DRAW_HIGHT), radius=30, resolution=8)), 
+      shape=Circle(arm, origin=(135, 158, DRAW_HIGHT), radius=30, resolution=8), 
       draw_h=DRAW_HIGHT,
       travel_h=TRAVEL_HIGHT
-    )
+    ))
     
     shape_commands.append(TravelSafe(
       shape=Circle(arm, origin=(135+50, 158, DRAW_HIGHT), radius=30, resolution=120), 
