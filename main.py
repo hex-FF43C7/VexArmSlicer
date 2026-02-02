@@ -119,7 +119,7 @@ class DoLine:
 
 
 class Circle:
-    def __init__(self, arm, origin, radius, resolution=30, slice_start=0, slice_end=360):
+    def __init__(self, arm, origin, radius, resolution=30, slice_start=0, slice_end=360, overlap=None):
         self.arm = arm
         # self.arm.set_end_effector_type(self.arm.PEN)
 
@@ -130,10 +130,18 @@ class Circle:
         self.slice_start = slice_start
         self.slice_end = slice_end
         self.start_p = [origin[0]+radius, origin[1], origin[2]]
+        
+        if overlap is None:
+          auto_overlap = int(round(resolution/20))
+          self.overlap = auto_overlap if auto_overlap >= 1 else 1
+        elif overlap is False:
+          self.overlap = 0
+        else:
+          self.overlap = overlap
     
     def do_shape(self):
       points = []
-      for i in range(self.resolution):
+      for i in range(self.resolution+self.overlap):
           # Calculate the angle for each point, evenly spaced
           angle = 2 * math.pi / self.resolution * i
           
@@ -222,7 +230,7 @@ def main():
 
     shape_commands = []
 
-    DRAW_HIGHT = 1
+    DRAW_HIGHT = 0
     TRAVEL_HIGHT = 30
     
     arm.set_end_effector_type(arm.PEN)
