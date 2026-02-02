@@ -2,12 +2,15 @@ import os
 try:
     import Pillow
 except:
-    os.sys('python -m pip install Pillow -q')
+    os.system('python -m pip install Pillow -q')
+    import Pillow
 
 try:
     from aspose.svg.imagevectorization import ImageVectorizer, ImageTraceSmoother, BezierPathBuilder
 except:
-    os.sys('python -m pip install aspose -q')
+    os.system('python -m pip install aspose -q')
+    from aspose.svg.imagevectorization import ImageVectorizer, ImageTraceSmoother, BezierPathBuilder
+
     
 class VectorToPoints:
     pass
