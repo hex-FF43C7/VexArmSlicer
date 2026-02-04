@@ -11,13 +11,11 @@ def main():
     
     arm.set_end_effector_type(arm.PEN)
     
-    orig = [50, 180, DRAW_HEIGHT]
-    for distance in range(20, 90, 10):
-        shape_commands.append(TravelSafe(
-            shape=Rectangle(arm, [orig[0], orig[1], DRAW_HEIGHT], [orig[0]+distance*2, orig[1]-distance, DRAW_HEIGHT]), 
-            draw_h=DRAW_HEIGHT,
-            travel_h=TRAVEL_HEIGHT,
-        ))
+    shape_commands.append(TravelSafe(
+        shape=Rectangle(arm, [50, 80, DRAW_HEIGHT], [100, 160, DRAW_HEIGHT]), 
+        draw_h=DRAW_HEIGHT,
+        travel_h=TRAVEL_HEIGHT,
+    ))
     
     
     for command in shape_commands:
