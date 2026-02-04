@@ -16,6 +16,9 @@ class ArmSlicer:
 
     self.valid_ends = [self.PEN, self.MAGNET]
 
+  def set_end_effector_magnet(self, state: bool):
+    self.gcode.append(f'G8 E{1 if state else 0}')
+
   def set_end_effector_type(self, new_type):
     if new_type in self.valid_ends:
       self.gcode.append(f'EFF {new_type}')
@@ -59,12 +62,14 @@ class ArmSlicer:
           else:
             match sub_commands[1][0]:
               case 'S':
-                answer.append(f"time.sleep({sub_commands[1][1::]})")
+                answer.append(f"cte.wait({sub_commands[1][1::]}, cte.SECONDS)")
               case _:
                 raise Exception(f'unsuported at the moment "{sub_commands[1][0]}" in "{command}" on line {line}')
                 
         case 'EFF':
           answer.append(f"{arm_object_name}.set_end_effector_type({arm_object_name}.{sub_commands[-1]})")
+        case 'G8':
+          answer.append(f"{arm_object_name}.set_end_effector_magnet({'True' if sub_commands[-1] == 'E1' else 'False'})")
         case _:
           raise Exception(f'unknown gcode cmd "{sub_commands} on line {line+1}"')
 
@@ -72,6 +77,9 @@ class ArmSlicer:
     if not write_to_file is None:
       write_to_file.write(text)
     return text
+
+  def sleep(self, time):
+    self.gcode.append(f"G4 S{time}")
 
   def write_to_file(self, file):
     file.write(self.get_gcode_str())
@@ -219,6 +227,32 @@ class TravelSafe:
     
     self.shape.arm.move_inc(z=self.travel_h)
 
+class MoveBlock:
+  def __init__(self, arm, box_start, box_end, travel_h):
+    self.arm = arm
+    self.start_p = [box_start[0], box_start[1], travel_h]
+    self.box_start = box_start
+    self.box_end = box_end
+    self.travel_h = travel_h
+  
+  def do_shape(self):
+    end_high = [self.box_end[0], self.box_end[1], self.travel_h]
+    
+    self.arm.set_end_effector_magnet(False)
+
+    self.arm.move_to(*self.start_p)
+    self.arm.move_to(*self.box_start)
+
+    self.arm.set_end_effector_magnet(True)
+
+    self.arm.move_to(*self.start_p)
+    
+    self.arm.move_to(*end_high)
+    self.arm.move_to(*self.box_end)
+
+    self.arm.set_end_effector_magnet(False)
+
+    self.arm.move_to(*end_high)
 
 def main():
     arm = ArmSlicer()
