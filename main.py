@@ -1,5 +1,6 @@
 # import image_converter.py
 from shapes import *
+import json
 
 def main():
     arm = ArmSlicer()
@@ -7,18 +8,22 @@ def main():
     shape_commands = []
 
     DRAW_HEIGHT = 0
-    TRAVEL_HEIGHT = 30
+    TRAVEL_HEIGHT = 200
     
-    arm.set_end_effector_type(arm.PEN)
+    arm.set_end_effector_type(arm.MAGNET)
     
-    orig = [50, 180, DRAW_HEIGHT]
-    for distance in range(20, 90, 10):
-        shape_commands.append(TravelSafe(
-            shape=Rectangle(arm, [orig[0], orig[1], DRAW_HEIGHT], [orig[0]+distance*2, orig[1]-distance, DRAW_HEIGHT]), 
-            draw_h=DRAW_HEIGHT,
-            travel_h=TRAVEL_HEIGHT,
-        ))
+    with open("worksetup2.1.txt", 'r') as file:
+        json_commands = json.loads(file.read())
     
+    for command in json_commands['Commands']:
+        split_bits = [i.split('-') for i in command.split(':')]
+        shape_commands.append(MoveBlock(
+                arm, 
+                box_start=[split_bits[0][0], split_bits[0][1], split_bits[0][2]],
+                box_end=[split_bits[1][0], split_bits[1][1], split_bits[1][2]],
+                travel_h = json_commands['Travel_Height']
+            )
+        )
     
     for command in shape_commands:
         command.do_shape()
