@@ -12,24 +12,16 @@ def main():
     
     arm.set_end_effector_type(arm.MAGNET)
     
-    # shape_commands.append(MoveBlock(
-    #         arm, 
-    #         box_start=[120, 120, 30],
-    #         box_end=[70, 70, 30],
-    #         travel_h = TRAVEL_HEIGHT
-    #     )
-    # )
-    
     with open("worksetup2.1.txt", 'r') as file:
         json_commands = json.loads(file.read())
     
-    for command in json_commands['Commands']
+    for command in json_commands['Commands']:
         split_bits = [i.split('-') for i in command.split(':')]
         shape_commands.append(MoveBlock(
                 arm, 
-                box_start=[split_bits[0][0], split_bits[0][1], split_bits[0][2]],
-                box_end=[split_bits[1][0], split_bits[1][1], split_bits[1][2]],
-                travel_h = json_commands['Travel_Height']
+                box_start=[int(split_bits[0][0]), int(split_bits[0][1]), int(split_bits[0][2])],
+                box_end=[int(split_bits[1][0]), int(split_bits[1][1]), int(split_bits[1][2])],
+                travel_h = int(json_commands['Travel_Height'])
             )
         )
     

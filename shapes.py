@@ -241,6 +241,7 @@ class MoveBlock:
     self.arm.set_end_effector_magnet(False)
 
     self.arm.move_to(*self.start_p)
+    self.arm.move_to(self.box_start[0], self.box_start[1], self.box_start[2]+10)
     self.arm.move_to(*self.box_start)
 
     self.arm.set_end_effector_magnet(True)
@@ -248,6 +249,7 @@ class MoveBlock:
     self.arm.move_to(*self.start_p)
     
     self.arm.move_to(*end_high)
+    self.arm.move_to(self.box_end[0], self.box_end[1], self.box_end[2]+10)
     self.arm.move_to(*self.box_end)
 
     self.arm.set_end_effector_magnet(False)
