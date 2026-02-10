@@ -256,6 +256,38 @@ class MoveBlock:
 
     self.arm.move_to(*end_high)
 
+class MoveStack:
+  def __init__(self, arm, top_block, block_height, stack_length, block_destiation, travel_h):
+    self.arm = arm
+    self.start_p = top_block
+    
+    self.travel_h = travel_h
+    self.block_height = block_height
+    self.stack_length = stack_length
+    self.block_destiation = block_destiation
+
+  def do_shape(self):
+    to_and_from_points = []
+    for block_mod_up in range(self.stack_length-1):
+      from_point = [self.top_block[0], self.top_block[1], self.top_block[2]-(self.block_height*block_mod_up)]
+      to_point = [self.top_block[0], self.top_block[1], self.top_block[2]+(self.block_height*block_mod_up)]
+      to_and_from_points.append([from_point, to_point])
+    
+    block_move_commands = []
+    
+    for start_cord, stop_cord in to_and_from_points:
+      block_move_commands.append(
+        MoveBlock(
+          arm=self.arm,
+          box_start=start_cord,
+          box_end=stop_cord,
+          travel_h=self.travel_h,
+        )
+      )
+    
+    for c in block_move_commands:
+      c.do_shape()
+
 def main():
     arm = ArmSlicer()
 
