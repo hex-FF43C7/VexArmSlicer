@@ -260,7 +260,8 @@ class MoveStack:
   def __init__(self, arm, top_block, block_height, stack_length, block_destiation, travel_h):
     self.arm = arm
     self.start_p = top_block
-    
+
+    self.top_block = top_block    
     self.travel_h = travel_h
     self.block_height = block_height
     self.stack_length = stack_length
@@ -268,9 +269,9 @@ class MoveStack:
 
   def do_shape(self):
     to_and_from_points = []
-    for block_mod_up in range(self.stack_length-1):
+    for block_mod_up in range(self.stack_length):
       from_point = [self.top_block[0], self.top_block[1], self.top_block[2]-(self.block_height*block_mod_up)]
-      to_point = [self.top_block[0], self.top_block[1], self.top_block[2]+(self.block_height*block_mod_up)]
+      to_point = [self.block_destiation[0], self.block_destiation[1], self.block_destiation[2]+(self.block_height*block_mod_up)]
       to_and_from_points.append([from_point, to_point])
     
     block_move_commands = []
