@@ -4,9 +4,6 @@ from cte import *
 import urandom
 import math
 
-
-
-
 # Color to String Helper
 def convert_color_to_string(col):
     if col == Color.RED:
@@ -30,16 +27,6 @@ def convert_color_to_string(col):
     if col == Color.TRANSPARENT:
         return "transparent"
     return ""
-
-#endregion VEXcode Generated Robot Configuration
-# ------------------------------------------
-# 
-# 	Project:      VEXcode Project
-#	Author:       VEX
-#	Created:
-#	Description:  VEXcode EXP Python Project
-# 
-# ------------------------------------------
 
 # Begin project code
 
@@ -154,15 +141,15 @@ class Stack:
                 arm=arm,
                 sensor=sensor, 
                 height_of_chip=chip_height,
-                location_of_chip=cord
+                location_of_chip=cord,
             ))
 
         return Stack.StackBuilderObjects(
             arm=arm,
-            sensor=sensor
-            chip_height=chip_height
-            chips_objects=chip_objects
-            destination=destination 
+            sensor=sensor,
+            chip_height=chip_height,
+            chips_objects=chip_objects,
+            destination=destination,
         )
 
     def unstack(self, locations_to_place: list):
