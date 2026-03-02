@@ -112,18 +112,22 @@ class Stack:
                 location_of_chip=[top_chip[0], top_chip[1], top_chip[2]-(self.chip_height*mod)]
             ))
     
-    @staticmethod
-    def StackBuilderObjects(arm, sensor, chip_height, chip_objects: list, destination):
-        ans = Stack(
+    @classmethod
+    def StackBuilderObjects(cls, arm, sensor, chip_height, chip_objects: list, destination):
+        ans = cls(
             arm=arm,
             sensor=sensor,
             chip_height=chip_height,
             top_chip=[0, 0, 0],
             amount_stacked=0
         )
-        for i, chp in enumerate(chip_objects):
-            chp.chips.append(chp)
-            chp.move_to([destination[0], destination[1], destination[2]+chip_height*i])
+        i = 0
+        for chp in chip_objects:
+            ans.chips.append(chp)
+            chp.move_to(
+                [destination[0], destination[1], destination[2]+chip_height*i]
+            )
+            i += 1
         
         ans.current_location=[
             destination[0],
@@ -133,22 +137,22 @@ class Stack:
 
         return ans
     
-    @staticmethod
-    def StackBuilderCords(arm, sensor, chip_height, chip_cords: list, destination):
+    @classmethod
+    def StackBuilderCords(cls, arm, sensor, chip_height, chip_cords: list, destination):
         chip_objects = []
         for cord in chip_cords:
-            chips_objects.append(Chip(
+            chip_objects.append(Chip(
                 arm=arm,
                 sensor=sensor, 
                 height_of_chip=chip_height,
                 location_of_chip=cord,
             ))
 
-        return Stack.StackBuilderObjects(
+        return cls.StackBuilderObjects(
             arm=arm,
             sensor=sensor,
             chip_height=chip_height,
-            chips_objects=chip_objects,
+            chip_objects=chip_objects,
             destination=destination,
         )
 
@@ -157,15 +161,16 @@ class Stack:
         for lz, chp in zip(locations_to_place, self.chips):
             ans.append(chp)
             chp.move_to(lz)
+        
+        for unstacked_chp in ans:
+            self.chips.remove(unstacked_chp)
+        
+        self.current_location[2] = self.current_location[2] - (self.chip_height*len(ans))
 
         return ans
             
         
         
-
-        
-
-    
     def move_to(self, destination):
         # mod = len(self.chips)
         mod = 1
@@ -233,4 +238,19 @@ if __name__ == '__main__':
     )
 
     first_stack.move_to([156, 157, 20])
+    chip_list = first_stack.unstack([
+        [59, 208, 23],
+        [100, 208, 23]
+    ])
+    print(chip_list)
+
+    second_stack = Stack.StackBuilderObjects(
+        arm=arm_1,
+        sensor=optical_3,
+        chip_height=10,
+        chip_objects=chip_list,
+        destination=[100, 208, 23],
+    )
+
+
     # reprint(brain, first_chip.get_color())
