@@ -242,14 +242,14 @@ if __name__ == '__main__':
         [59, 208, 23],
         [100, 208, 23]
     ])
-    print(chip_list)
+    reprint(brain, chip_list[0].current_location)
 
     second_stack = Stack.StackBuilderObjects(
         arm=arm_1,
         sensor=optical_3,
         chip_height=10,
-        chip_objects=chip_list,
-        destination=[100, 208, 23],
+        chip_objects=chip_list[::-1],
+        destination=[100, 208, 13],
     )
 
 
