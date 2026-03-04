@@ -70,8 +70,11 @@ class Chip:
         
         self.current_location = destination.copy()
 
-    def _set_color(self):
-        first_loc = self.current_location.copy()
+    def _set_color(self destination=None):
+        if destination is None:
+            first_loc = self.current_location.copy()
+        else:
+            first_loc = destination.copy()
         self.move_to(self.sensor_location, hold=True)
 
         self.sensor.set_light(LedStateType.ON)
@@ -90,8 +93,8 @@ class Chip:
         
         return self.color_of_chip
 
-    def get_color(self):
-        if self.color_of_chip is None:
+    def get_color(self, force_scan=False):
+        if self.color_of_chip is None or force_scan:
             return self._set_color()
         else:
             return self.color_of_chip
@@ -113,7 +116,7 @@ class Stack:
             ))
     
     @classmethod
-    def StackBuilderObjects(cls, arm, sensor, chip_height, chip_objects: list, destination):
+    def StackBuilderObjects(cls, arm, sensor, chip_height, chip_objects: list, destination, move=True):
         ans = cls(
             arm=arm,
             sensor=sensor,
@@ -124,9 +127,12 @@ class Stack:
         i = 0
         for chp in chip_objects:
             ans.chips.append(chp)
-            chp.move_to(
-                [destination[0], destination[1], destination[2]+chip_height*i]
-            )
+            if move:
+                chp.move_to(
+                    [destination[0], destination[1], destination[2]+chip_height*i]
+                )
+            else:
+                chp.current_location = [destination[0], destination[1], destination[2]+chip_height*i]
             i += 1
         
         ans.current_location=[
@@ -176,6 +182,69 @@ class Stack:
         mod = 1
         for chp in self.chips:
             chp.move_to([destination[0], destination[1], destination[2]+self.chip_height*mod])
+            mod += 1
+
+        self.chips = self.chips[::-1]
+        self.current_location = destination.copy()
+
+    def sort(self, key):
+        """
+        key:
+        [
+            [lambda chip_object: chip_object.get_color() == Color.RED, [xyz]],
+            [lambda chip_object: chip_object.get_color() == Color.GREEN, [xyz]],
+            [lambda chip_object: True, [xyz else line]]
+        ]
+        """
+
+        # sorted_piles = {tuple(locaiton), self.StackBuilderObjects() for _, locaiton in key}
+        for _, locaiton in key
+            sorted_piles[tuple(locaiton)] = self.StackBuilderObjects(
+                arm=self.arm
+                sensor=self.sensor
+                chip_height=self.chip_height
+                chip_objects=[]
+                destination=list(locaiton)
+                move=False
+            )
+
+
+        for chp in self.chips:
+            chip_sorted_flag = False
+            for test, location in key:
+                if test(chp):
+                    chip_sorted_flag = True
+                    sorted_piles[tuple(location)].chips = [chp] + sorted_piles[tuple(location)].chips
+                    sorted_piles[tuple(locaiton)].current_location = [
+                        sorted_piles[tuple(locaiton)].current_location[0]
+                        sorted_piles[tuple(locaiton)].current_location[1]
+                        sorted_piles[tuple(locaiton)].current_location[2]+chip_height
+                    ]
+                    chp.move_to([location[0], locaiton[1], locaiton[2]])
+                    break
+            if not chip_sorted_flag:
+                raise Exception('chip couldnt be sorted, please add an else line')
+
+        # self.chips = []
+        # ans = {}
+        # for location, chips_in_pile in sorted_piles:
+        #     ans[tuple(locaiton)] = self.StackBuilderObjects(
+        #         arm=self.arm
+        #         sensor=self.sensor
+        #         chip_height=self.chip_height
+        #         chip_objects=[]
+        #         destination=list(locaiton)
+        #         move=False
+        #     )
+
+
+        return chip_in_pile
+    
+    def update_colors(self, destination):
+        # mod = len(self.chips)
+        mod = 1
+        for chp in self.chips:
+            chp.get_color(destination=[destination[0], destination[1], destination[2]+self.chip_height*mod])
             mod += 1
 
         self.chips = self.chips[::-1]
@@ -237,20 +306,22 @@ if __name__ == '__main__':
         2,
     )
 
-    first_stack.move_to([156, 157, 20])
-    chip_list = first_stack.unstack([
-        [59, 208, 23],
-        [100, 208, 23]
-    ])
-    reprint(brain, chip_list[0].current_location)
+    first_stack.sort()
 
-    second_stack = Stack.StackBuilderObjects(
-        arm=arm_1,
-        sensor=optical_3,
-        chip_height=10,
-        chip_objects=chip_list[::-1],
-        destination=[100, 208, 13],
-    )
+    # first_stack.move_to([156, 157, 20])
+    # chip_list = first_stack.unstack([
+    #     [59, 208, 23],
+    #     [100, 208, 23]
+    # ])
+    # reprint(brain, chip_list[0].current_location)
+
+    # second_stack = Stack.StackBuilderObjects(
+    #     arm=arm_1,
+    #     sensor=optical_3,
+    #     chip_height=10,
+    #     chip_objects=chip_list[::-1],
+    #     destination=[100, 208, 13],
+    # )
 
 
     # reprint(brain, first_chip.get_color())
