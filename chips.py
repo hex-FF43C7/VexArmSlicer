@@ -1,5 +1,56 @@
 #region VEXcode Generated Robot Configuration
-from vex import *
+try:
+    from vex import *
+    from vex import *
+except ImportError: # this code is meant to run on a robot, the libraries are only available on the robot, so this is a fake import to make it runable in test environments
+    class Color:
+        RED = 0
+        GREEN = 1
+        BLUE = 2
+        WHITE = 3
+        YELLOW = 4
+        ORANGE = 5
+        PURPLE = 6
+        CYAN = 7
+        BLACK = 8
+    
+    class wait:
+        def __init__(self, time, unit):
+            pass
+    
+    class LedStateType:
+        ON = 0
+        OFF = 1
+    
+    class Ports:
+        PORT1 = 0
+        PORT2 = 1
+        PORT3 = 2
+        PORT4 = 3
+        PORT5 = 4
+        PORT6 = 5
+        PORT7 = 6
+        PORT8 = 7
+        PORT9 = 8
+        PORT10 = 9
+    
+    class Brain:
+        def __init__(self):
+            self.screen = self.Screen()
+        
+        class Screen:
+            def set_cursor(self, x, y):
+                pass
+            
+            def clear_row(self, row):
+                pass
+            
+            def print(self, msg):
+                print(msg)
+    
+    SECONDS = 0
+    MSEC = 1
+    PERCENT = 0
 from cte import *
 import urandom
 import math
@@ -57,7 +108,7 @@ class Chip:
             self.arm.set_end_effector_magnet(False)
 
             self.arm.move_to(*start_p)
-            self.arm.move_to(self.chip_grab_point(current_location, z_mod=10))
+            self.arm.move_to(*self.chip_grab_point(self.current_location, z_mod=10))
             self.arm.move_to(*self.chip_grab_point(self.current_location))
 
             self.arm.set_end_effector_magnet(True)
@@ -65,8 +116,8 @@ class Chip:
         self.arm.move_to(*start_p)
         
         self.arm.move_to(*end_high)
-        self.arm.move_to(self.chip_grab_point(destination, z_mod=10))
-        self.arm.move_to(self.chip_grab_point(destination))
+        self.arm.move_to(*self.chip_grab_point(destination, z_mod=10))
+        self.arm.move_to(*self.chip_grab_point(destination))
 
         if not hold:
             self.arm.set_end_effector_magnet(False)
@@ -75,7 +126,7 @@ class Chip:
         
         self.current_location = destination.copy()
     
-    def chip_grab_point(origin_to_convert, z_mod=0):
+    def chip_grab_point(self, origin_to_convert, z_mod=0):
         return origin_to_convert[0], origin_to_convert[1], origin_to_convert[2] + z_mod + self.height_of_chip
 
     def _set_color(self, destination=None):
@@ -101,10 +152,17 @@ class Chip:
         
         return self.color_of_chip
 
-    def get_color(self, force_scan=False):
+    def get_color(self, force_scan=False, destination=None):
+        """Return the cached color or perform a scan.
+
+        If ``destination`` is provided and a scan is required, the chip will be
+        moved to the sensor and then automatically moved to the specified
+        ``destination`` (usually used when scanning while relocating the chip).
+        """
         if self.color_of_chip is None or force_scan:
-            return self._set_color()
+            return self._set_color(destination=destination)
         else:
+            # no movement occurs when returning cached color
             return self.color_of_chip
 
 class Stack:
@@ -120,7 +178,7 @@ class Stack:
                 arm=self.arm,
                 sensor=self.sensor, 
                 height_of_chip=self.chip_height,
-                location_of_chip=[origin_chip[0], origin_chip[1], origin_chip[2]+(self.chip_height*mod)]
+                location_of_chip=[origin_chip[0], origin_chip[1], origin_chip[2]+(self.chip_height*mod)],
                 sensor_location=sensor_location,
                 travel_height=travel_height,
             ))
@@ -164,11 +222,8 @@ class Stack:
                 chp.current_location = [destination[0], destination[1], destination[2]+chip_height*i]
             i += 1
         
-        ans.current_location=[
-            destination[0],
-            destination[1],
-            destination[2]+(chip_height*len(chip_objects)),
-        ]
+        # bottom of the resulting stack sits exactly at the destination
+        ans.current_location = destination.copy()
 
         return ans
     
@@ -207,6 +262,9 @@ class Stack:
             chip_height=chip_height,
             chip_objects=chip_objects,
             destination=destination,
+            move=move,
+            sensor_location=sensor_location,
+            travel_height=travel_height,
         )
 
     def unstack(self, locations_to_place: list):
@@ -242,12 +300,23 @@ class Stack:
             destinaiton (list): an xyz list for the destinaiton of the stack
         """
         # mod = len(self.chips)
-        mod = 1
+        # build a new list in bottom‑first order while moving each chip in
+        # top‑to‑bottom sequence.  That way the final self.chips list already
+        # reflects the inverted order and we do not need to reverse later.
+        new_list = []
+        offset = 0
         for chp in self.chips_from_top_to_bottom:
-            chp.move_to([destination[0], destination[1], destination[2]+self.chip_height*mod])
-            mod += 1
+            # place the chip at the next available height above the destination
+            target = [
+                destination[0],
+                destination[1],
+                destination[2] + offset,
+            ]
+            chp.move_to(target)
+            new_list.append(chp)
+            offset += self.chip_height
 
-        self.chips = self.chips[::-1]
+        self.chips = new_list
         self.current_location = destination.copy()
 
     def sort(self, key):
@@ -263,32 +332,35 @@ class Stack:
         """
 
         # sorted_piles = {tuple(locaiton), self.StackBuilderObjects() for _, locaiton in key}
-        sorted_piles = dict()
-        for _, locaiton in key:
-            sorted_piles[tuple(locaiton)] = self.StackBuilderObjects(
+        sorted_piles = {}
+        for _, location in key:
+            sorted_piles[tuple(location)] = self.StackBuilderObjects(
                 arm=self.arm,
                 sensor=self.sensor,
                 chip_height=self.chip_height,
                 chip_objects=[],
-                destination=list(locaiton),
+                destination=list(location),
                 move=False,
             )
 
 
+        # iterate from the top of the original stack; each chip will be
+        # dropped onto the appropriate output pile and the order of the
+        # original stack naturally becomes inverted in the result.
         for chp in self.chips_from_top_to_bottom:
-            chip_sorted_flag = False
+            placed = False
             for test, location in key:
                 if test(chp):
-                    chip_sorted_flag = True
-                    sorted_piles[tuple(location)].chips = [chp] + sorted_piles[tuple(location)].chips
-                    sorted_piles[tuple(locaiton)].current_location = [
-                        sorted_piles[tuple(locaiton)].current_location[0],
-                        sorted_piles[tuple(locaiton)].current_location[1],
-                        sorted_piles[tuple(locaiton)].current_location[2]+self.chip_height
-                    ]
-                    chp.move_to([location[0], locaiton[1], locaiton[2]])
+                    placed = True
+                    pile = sorted_piles[tuple(location)]
+                    # compute z offset based on how many chips already in pile
+                    z_offset = len(pile.chips) * self.chip_height
+                    chp.move_to([location[0], location[1], location[2] + z_offset])
+                    pile.chips.append(chp)  # new chip is now the top of pile
+                    # bottom location of pile never changes; current_location
+                    # remains equal to the provided location
                     break
-            if not chip_sorted_flag:
+            if not placed:
                 raise Exception('chip couldnt be sorted, please add an else line')
 
         return sorted_piles
@@ -300,13 +372,17 @@ class Stack:
         Args:
             destination (list): an xyz list on where the chips end up after being scanned
         """
-        # mod = len(self.chips)
-        mod = 1
+        # similar to move_to() but scan every chip before placing it
+        new_list = []
+        offset = 0
         for chp in self.chips_from_top_to_bottom:
-            chp.get_color(destination=[destination[0], destination[1], destination[2]+self.chip_height*mod])
-            mod += 1
+            # scan and simultaneously move each chip into place
+            target = [destination[0], destination[1], destination[2] + offset]
+            chp.get_color(force_scan=True, destination=target)
+            new_list.append(chp)
+            offset += self.chip_height
 
-        self.chips = self.chips[::-1]
+        self.chips = new_list
         self.current_location = destination.copy()
     
     @property
@@ -325,6 +401,9 @@ def reprint(brain, msg):
 
 
 if __name__ == '__main__':
+    """this code is meant to run on the robot, it will not run in test environments, but it is usefull for manual testing and debugging, and also serves as an example of how to use the stack and chip classes"""
+
+
     # Brain should be defined by default
     brain = Brain()
 
