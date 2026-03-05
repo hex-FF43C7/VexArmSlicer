@@ -4,6 +4,10 @@ from cte import *
 import urandom
 import math
 
+"""
+ALL LOCATIONS ARE FROM THE BOTTOM MOST FACE OF THE OBJECT, 
+"""
+
 # Color to String Helper
 def convert_color_to_string(col):
     if col == Color.RED:
@@ -52,16 +56,16 @@ class Chip:
             self.arm.set_end_effector_magnet(False)
 
             self.arm.move_to(*start_p)
-            self.arm.move_to(self.current_location[0], self.current_location[1], self.current_location[2]+10)
-            self.arm.move_to(*self.current_location)
+            self.arm.move_to(self.chip_grab_point(current_location, z_mod=10))
+            self.arm.move_to(*self.chip_grab_point(self.current_location))
 
             self.arm.set_end_effector_magnet(True)
 
         self.arm.move_to(*start_p)
         
         self.arm.move_to(*end_high)
-        self.arm.move_to(destination[0], destination[1], destination[2]+10)
-        self.arm.move_to(*destination)
+        self.arm.move_to(self.chip_grab_point(destination, z_mod=10))
+        self.arm.move_to(self.chip_grab_point(destination))
 
         if not hold:
             self.arm.set_end_effector_magnet(False)
@@ -69,6 +73,9 @@ class Chip:
             self.arm.move_to(*end_high)
         
         self.current_location = destination.copy()
+    
+    def chip_grab_point(origin_to_convert, z_mod=0):
+        return origin_to_convert[0], origin_to_convert[1], origin_to_convert[2] + z_mod + self.height_of_chip
 
     def _set_color(self, destination=None):
         if destination is None:
@@ -100,19 +107,19 @@ class Chip:
             return self.color_of_chip
 
 class Stack:
-    def __init__(self, arm, sensor, chip_height, top_chip, amount_stacked):
+    def __init__(self, arm, sensor, chip_height, origin_chip, amount_stacked):
         self.arm = arm
         self.sensor = sensor
-        self.current_location = top_chip #track location by top most chip
+        self.current_location = origin_chip #track location by origin, bottom face of lowest chip
         self.chip_height = chip_height
         
-        self.chips = []
+        self.chips = [] #bottom chip is first, and top chip is last
         for mod in range(amount_stacked):
             self.chips.append(Chip(
                 arm=self.arm,
                 sensor=self.sensor, 
                 height_of_chip=self.chip_height,
-                location_of_chip=[top_chip[0], top_chip[1], top_chip[2]-(self.chip_height*mod)]
+                location_of_chip=[origin_chip[0], origin_chip[1], origin_chip[2]+(self.chip_height*mod)]
             ))
     
     @classmethod
@@ -121,7 +128,7 @@ class Stack:
             arm=arm,
             sensor=sensor,
             chip_height=chip_height,
-            top_chip=[0, 0, 0],
+            origin_chip=[0, 0, 0],
             amount_stacked=0
         )
         i = 0
@@ -180,7 +187,7 @@ class Stack:
     def move_to(self, destination):
         # mod = len(self.chips)
         mod = 1
-        for chp in self.chips:
+        for chp in self.chips_from_top_to_bottom:
             chp.move_to([destination[0], destination[1], destination[2]+self.chip_height*mod])
             mod += 1
 
@@ -210,7 +217,7 @@ class Stack:
             )
 
 
-        for chp in self.chips:
+        for chp in self.chips_from_top_to_bottom:
             chip_sorted_flag = False
             for test, location in key:
                 if test(chp):
@@ -226,30 +233,25 @@ class Stack:
             if not chip_sorted_flag:
                 raise Exception('chip couldnt be sorted, please add an else line')
 
-        # self.chips = []
-        # ans = {}
-        # for location, chips_in_pile in sorted_piles:
-        #     ans[tuple(locaiton)] = self.StackBuilderObjects(
-        #         arm=self.arm
-        #         sensor=self.sensor
-        #         chip_height=self.chip_height
-        #         chip_objects=[]
-        #         destination=list(locaiton)
-        #         move=False
-        #     )
-
-
         return sorted_piles
     
     def update_colors(self, destination):
         # mod = len(self.chips)
         mod = 1
-        for chp in self.chips:
+        for chp in self.chips_from_top_to_bottom:
             chp.get_color(destination=[destination[0], destination[1], destination[2]+self.chip_height*mod])
             mod += 1
 
         self.chips = self.chips[::-1]
         self.current_location = destination.copy()
+    
+    @property
+    def chips_from_top_to_bottom(self):
+        # for chip in self.chips[::-1]
+        #     yield chip
+        # else:
+        #     raise StopIteration()
+        return self.chips[::-1]
 
 
 def reprint(brain, msg):
@@ -300,8 +302,8 @@ if __name__ == '__main__':
     )
 
     sorted_stacks = first_stack.sort(key=[
-        [lambda chp: chp.get_color() == Color.GREEN, [156, 157, 20]],
-        [lambda chp: chp.get_color() == Color.RED, [156, 30, 20]],
+        [lambda chp: chp.get_color(force_scan=True) == Color.GREEN, [156, 157, 20]],
+        [lambda chp: chp.get_color(force_scan=True) == Color.RED, [156, 30, 20]],
         [lambda chp: True, [156, -30, 40]],
     ])
     print(sorted_stacks)
