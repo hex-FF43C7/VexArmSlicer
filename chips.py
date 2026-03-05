@@ -107,7 +107,7 @@ class Chip:
             return self.color_of_chip
 
 class Stack:
-    def __init__(self, arm, sensor, chip_height, origin_chip, amount_stacked):
+    def __init__(self, arm, sensor, chip_height, origin_chip, amount_stacked, sensor_location=SENSOR, travel_height=TRAVEL_HEIGHT):
         self.arm = arm
         self.sensor = sensor
         self.current_location = origin_chip #track location by origin, bottom face of lowest chip
@@ -120,16 +120,20 @@ class Stack:
                 sensor=self.sensor, 
                 height_of_chip=self.chip_height,
                 location_of_chip=[origin_chip[0], origin_chip[1], origin_chip[2]+(self.chip_height*mod)]
+                sensor_location=sensor_location,
+                travel_height=travel_height,
             ))
     
     @classmethod
-    def StackBuilderObjects(cls, arm, sensor, chip_height, chip_objects: list, destination, move=True):
+    def StackBuilderObjects(cls, arm, sensor, chip_height, chip_objects: list, destination, move=True, sensor_location=SENSOR, travel_height=TRAVEL_HEIGHT):
         ans = cls(
             arm=arm,
             sensor=sensor,
             chip_height=chip_height,
             origin_chip=[0, 0, 0],
-            amount_stacked=0
+            amount_stacked=0,
+            sensor_location=sensor_location,
+            travel_height=travel_height
         )
         i = 0
         for chp in chip_objects:
@@ -151,7 +155,7 @@ class Stack:
         return ans
     
     @classmethod
-    def StackBuilderCords(cls, arm, sensor, chip_height, chip_cords: list, destination):
+    def StackBuilderCords(cls, arm, sensor, chip_height, chip_cords: list, destination, sensor_location=SENSOR, travel_height=TRAVEL_HEIGHT):
         chip_objects = []
         for cord in chip_cords:
             chip_objects.append(Chip(
@@ -159,6 +163,8 @@ class Stack:
                 sensor=sensor, 
                 height_of_chip=chip_height,
                 location_of_chip=cord,
+                sensor_location=sensor_location,
+                travel_height=travel_height,
             ))
 
         return cls.StackBuilderObjects(

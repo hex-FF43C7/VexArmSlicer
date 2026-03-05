@@ -121,7 +121,7 @@ class test_stack(unittest.TestCase):
             arm=self.f_arm,
             sensor=self.f_sensor,
             height_of_chip=10, 
-            location_of_chip=[0, 0, 0], 
+            location_of_chip=[1, 1, 0], 
             sensor_location=self.sensor_location, 
             travel_height=self.travel_height, 
             color_of_chip=None
@@ -130,7 +130,7 @@ class test_stack(unittest.TestCase):
             arm=self.f_arm,
             sensor=self.f_sensor,
             height_of_chip=10, 
-            location_of_chip=[0, 0, 0], 
+            location_of_chip=[2, 2, 0], 
             sensor_location=self.sensor_location, 
             travel_height=self.travel_height, 
             color_of_chip=None
@@ -139,7 +139,7 @@ class test_stack(unittest.TestCase):
             arm=self.f_arm,
             sensor=self.f_sensor,
             height_of_chip=10, 
-            location_of_chip=[0, 0, 0], 
+            location_of_chip=[3, 3, 0], 
             sensor_location=self.sensor_location, 
             travel_height=self.travel_height, 
             color_of_chip=None
@@ -148,7 +148,7 @@ class test_stack(unittest.TestCase):
             arm=self.f_arm,
             sensor=self.f_sensor,
             height_of_chip=10, 
-            location_of_chip=[0, 0, 0], 
+            location_of_chip=[4, 4, 0], 
             sensor_location=self.sensor_location, 
             travel_height=self.travel_height, 
             color_of_chip=None
@@ -157,7 +157,7 @@ class test_stack(unittest.TestCase):
             arm=self.f_arm,
             sensor=self.f_sensor,
             height_of_chip=10, 
-            location_of_chip=[0, 0, 0], 
+            location_of_chip=[5, 5, 0], 
             sensor_location=self.sensor_location, 
             travel_height=self.travel_height, 
             color_of_chip=None
@@ -166,7 +166,7 @@ class test_stack(unittest.TestCase):
             arm=self.f_arm,
             sensor=self.f_sensor,
             height_of_chip=10, 
-            location_of_chip=[0, 0, 0], 
+            location_of_chip=[6, 6, 0], 
             sensor_location=self.sensor_location, 
             travel_height=self.travel_height, 
             color_of_chip=None
@@ -175,13 +175,27 @@ class test_stack(unittest.TestCase):
             arm=self.f_arm,
             sensor=self.f_sensor,
             height_of_chip=10, 
-            location_of_chip=[0, 0, 0], 
+            location_of_chip=[7, 7, 0], 
             sensor_location=self.sensor_location, 
             travel_height=self.travel_height, 
             color_of_chip=None
         )
 
+        self.list_of_chips = [
+            self.test_chip_a,
+            self.test_chip_b,
+            self.test_chip_c,
+            self.test_chip_d,
+            self.test_chip_e,
+            self.test_chip_f,
+            self.test_chip_a,
+            self.test_chip_h,
+        ]
+
+        self.f_arm.clear_history()
+
     def test_init(self):
+        self.f_arm.clear_history()
         stk = chips.Stack(
             arm=self.arm,
             sensor=self.sensor,
@@ -199,16 +213,63 @@ class test_stack(unittest.TestCase):
             self.assertEqual(test, key)
 
     def test_StackBuilderObjects(self):
-        pass
+        self.f_arm.clear_history()
+        stk = chips.Stack.StackBuilderObjects(
+            arm=self.f_arm,
+            sensor=self.f_sensor,
+            chip_objects=self.list_of_chips,
+            destination=[40, 40, 0],
+            move=True
+        )
+
+        chip_locations = [i.current_locaiton for i in stk.chips]
+        expectaion = [[40, 40, i*10] for i in range(7)]
+        for test, key in zip(chip_locations, expectaion):
+            self.assertEqual(test, key)
 
     def test_StackBuilderCords(self):
-        pass
+        self.f_arm.clear_history()
+        stk = chips.Stack.StackBuilderCords(
+            arm=self.f_arm,
+            sensor=self.f_sensor,
+            chip_cords=[i.current_locaiton for i in self.list_of_chips],
+            destination=[45, 45, 0],
+            move=True
+        )
+
+        chip_locations = [i.current_locaiton for i in stk.chips]
+        expectaion = [[45, 45, i*10] for i in range(7)]
+        for test, key in zip(chip_locations, expectaion):
+            self.assertEqual(test, key)
 
     def test_unstack(self):
-        pass
+        stk = chips.Stack(
+            arm=self.arm,
+            sensor=self.sensor,
+            chip_height=10,
+            origin_chip=[10, 10, 0],
+            amount_stacked=7,
+        )
+
+        
+
 
     def test_move_to(self):
-        pass
+        self.f_arm.clear_history()
+        stk = chips.Stack.StackBuilderObjects(
+            arm=self.f_arm,
+            sensor=self.f_sensor,
+            chip_objects=self.list_of_chips,
+            destination=[45, 45, 0],
+            move=True
+        )
+
+        stk.move_to([70, 70, 0])
+
+        chip_locations = [i.current_locaiton for i in stk.chips]
+        expectaion = [[70, 70, i*10] for i in range(7)]
+        for test, key in zip(chip_locations, expectaion):
+            self.assertEqual(test, key)
 
     def test_sort(self):
         pass
