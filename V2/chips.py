@@ -1,58 +1,11 @@
 #region VEXcode Generated Robot Configuration
 try:
     from vex import *
-    from vex import *
+    from cte import *
+    import urandom
 except ImportError: # this code is meant to run on a robot, the libraries are only available on the robot, so this is a fake import to make it runable in test environments
-    class Color:
-        RED = 0
-        GREEN = 1
-        BLUE = 2
-        WHITE = 3
-        YELLOW = 4
-        ORANGE = 5
-        PURPLE = 6
-        CYAN = 7
-        BLACK = 8
-    
-    class wait:
-        def __init__(self, time, unit):
-            pass
-    
-    class LedStateType:
-        ON = 0
-        OFF = 1
-    
-    class Ports:
-        PORT1 = 0
-        PORT2 = 1
-        PORT3 = 2
-        PORT4 = 3
-        PORT5 = 4
-        PORT6 = 5
-        PORT7 = 6
-        PORT8 = 7
-        PORT9 = 8
-        PORT10 = 9
-    
-    class Brain:
-        def __init__(self):
-            self.screen = self.Screen()
-        
-        class Screen:
-            def set_cursor(self, x, y):
-                pass
-            
-            def clear_row(self, row):
-                pass
-            
-            def print(self, msg):
-                print(msg)
-    
-    SECONDS = 0
-    MSEC = 1
-    PERCENT = 0
-from cte import *
-import urandom
+    from Fake_import import *
+# from cte import *
 import math
 
 """
@@ -331,7 +284,6 @@ class Stack:
             ]
         """
 
-        # sorted_piles = {tuple(locaiton), self.StackBuilderObjects() for _, locaiton in key}
         sorted_piles = {}
         for _, location in key:
             sorted_piles[tuple(location)] = self.StackBuilderObjects(

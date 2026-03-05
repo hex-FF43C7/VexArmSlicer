@@ -66,16 +66,16 @@ class test_chip(unittest.TestCase):
         a.move_to([100, 100, 0])
 
         ideal_map_after_move = [
-            False,                     # magnet off at start
+            False,                    # magnet off at start
             [0, 0, 200],              # lift to travel height
             [0, 0, 20],               # approach top of chip
             [0, 0, 10],               # grab chip
-            True,                      # magnet on
+            True,                     # magnet on
             [0, 0, 200],              # lift again
             [100, 100, 200],          # move above destination
             [100, 100, 20],           # approach destination
             [100, 100, 10],           # place chip
-            False,                     # release magnet
+            False,                    # release magnet
             [100, 100, 200],          # retreat
         ]
 
@@ -100,11 +100,11 @@ class test_chip(unittest.TestCase):
         self.assertEqual(color_thought, 'red_place_holder')
 
         ideal_map_after_move = [
-            False,                     # initial magnet off
+            False,                    # initial magnet off
             [0, 0, 200],              # lift to travel height at origin
             [0, 0, 20],               # approach original chip
             [0, 0, 10],               # grab chip
-            True,                      # magnet engaged
+            True,                     # magnet engaged
             [0, 0, 200],              # lift again
             [30, 30, 200],            # move above sensor location
             [30, 30, 60],             # approach sensor top
