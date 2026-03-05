@@ -5,7 +5,8 @@ import urandom
 import math
 
 """
-ALL LOCATIONS ARE FROM THE BOTTOM MOST FACE OF THE OBJECT, 
+ALL LOCATIONS ARE FROM THE BOTTOM MOST FACE OF THE OBJECT,
+XYZ LIST IS A LIST FORMATED LIKE SO: [X, Y, Z] 
 """
 
 # Color to String Helper
@@ -126,6 +127,23 @@ class Stack:
     
     @classmethod
     def StackBuilderObjects(cls, arm, sensor, chip_height, chip_objects: list, destination, move=True, sensor_location=SENSOR, travel_height=TRAVEL_HEIGHT):
+        """
+        a factory style class method to build a stack based on a list of chip objects
+
+        Args:
+            arm (cte.arm): the arm in charge of moving the chips
+            sensor (cte.sensor): the sensor used to log chip color when requested
+            chip_height (int): height of chip in mm (because chips are kept track of based on bottom most face, but moved based on top most face, to height must be accounted for)
+            chip objects: (list): list of chip objects
+            destination (list): where the stack is located after chips are gathered
+            sensor_location (list): location of sensor, sensor faces up and the locaiton is the top most face of the sensor, this is the only instance of an origin being based on the top face
+            travel_height (int): how high the arm moves when moving latteraly
+            move (bool): if true, it will move the chips into the new stack after creation, otherwise its asumed that they are already in stack formation
+        
+        returns:
+            a new stack object with the chips in order and ready
+        """
+        
         ans = cls(
             arm=arm,
             sensor=sensor,
@@ -155,7 +173,23 @@ class Stack:
         return ans
     
     @classmethod
-    def StackBuilderCords(cls, arm, sensor, chip_height, chip_cords: list, destination, sensor_location=SENSOR, travel_height=TRAVEL_HEIGHT):
+    def StackBuilderCords(cls, arm, sensor, chip_height, chip_cords: list, destination, sensor_location=SENSOR, travel_height=TRAVEL_HEIGHT, move=True):
+        """
+        a factory style class method to build a stack based on the locaiton of other chips
+
+        Args:
+            arm (cte.arm): the arm in charge of moving the chips
+            sensor (cte.sensor): the sensor used to log chip color when requested
+            chip_height (int): height of chip in mm (because chips are kept track of based on bottom most face, but moved based on top most face, to height must be accounted for)
+            chip_cords: (list): list of xyz lists to grab the chips from
+            destination (list): where the stack is located after chips are gathered
+            sensor_location (list): location of sensor, sensor faces up and the locaiton is the top most face of the sensor, this is the only instance of an origin being based on the top face
+            travel_height (int): how high the arm moves when moving latteraly
+            move (bool): if true, it will move the chips into the new stack after creation, otherwise its asumed that they are already in stack formation
+        
+        returns:
+            a new stack object with the chips in order and ready
+        """
         chip_objects = []
         for cord in chip_cords:
             chip_objects.append(Chip(
@@ -176,21 +210,37 @@ class Stack:
         )
 
     def unstack(self, locations_to_place: list):
+        """
+        Unstacks the chips and places them in a series of locations while removing them from the stack
+
+        Args:
+            locations_to_place (list): a list of locations for the chips to be placed, top to bottom
+
+        Returns:
+            a list of chip objects that where unstacked
+        """
+            
         ans = []
-        for lz, chp in zip(locations_to_place, self.chips):
+        for lz, chp in zip(locations_to_place, self.chips_from_top_to_bottom):
             ans.append(chp)
             chp.move_to(lz)
         
         for unstacked_chp in ans:
             self.chips.remove(unstacked_chp)
         
-        self.current_location[2] = self.current_location[2] - (self.chip_height*len(ans))
+        # self.current_location[2] = self.current_location[2] - (self.chip_height*len(ans))
 
         return ans
             
         
         
     def move_to(self, destination):
+        """
+        moves the stack to a new location, but also inverts the order of the stack
+
+        args:
+            destinaiton (list): an xyz list for the destinaiton of the stack
+        """
         # mod = len(self.chips)
         mod = 1
         for chp in self.chips_from_top_to_bottom:
@@ -202,12 +252,14 @@ class Stack:
 
     def sort(self, key):
         """
-        key:
-        [
-            [lambda chip_object: chip_object.get_color() == Color.RED, [xyz]],
-            [lambda chip_object: chip_object.get_color() == Color.GREEN, [xyz]],
-            [lambda chip_object: True, [xyz else line]]
-        ]
+        sorts the chips into other stacks depending on the key
+        args:
+            key:
+            [
+                [lambda chip_object: chip_object.get_color() == Color.RED, [xyz]],
+                [lambda chip_object: chip_object.get_color() == Color.GREEN, [xyz]],
+                [lambda chip_object: True, [xyz]] #<-else line
+            ]
         """
 
         # sorted_piles = {tuple(locaiton), self.StackBuilderObjects() for _, locaiton in key}
@@ -242,6 +294,12 @@ class Stack:
         return sorted_piles
     
     def update_colors(self, destination):
+        """
+        moves the stack to a new loation same as the move comand, but updates the colors as it does so
+        
+        Args:
+            destination (list): an xyz list on where the chips end up after being scanned
+        """
         # mod = len(self.chips)
         mod = 1
         for chp in self.chips_from_top_to_bottom:
@@ -253,10 +311,10 @@ class Stack:
     
     @property
     def chips_from_top_to_bottom(self):
-        # for chip in self.chips[::-1]
-        #     yield chip
-        # else:
-        #     raise StopIteration()
+        """
+        to make loops more ledgeble, this function renames an arbatrary [::-1] to somthing easyer to understand
+        please note that the chips are returned in top to bottom because if using the move command on a chip, you can only really move the top most one at a time.
+        """
         return self.chips[::-1]
 
 
