@@ -250,9 +250,14 @@ class test_stack(unittest.TestCase):
             origin_chip=[10, 10, 0],
             amount_stacked=7,
         )
+        chip_goto = [i.current_locaiton for i in self.list_of_chips]
 
-        
+        stk.unstack(chip_goto)
 
+        chip_locations = [i.current_locaiton for i in stk.chips]
+
+        for test, key in zip(chip_locations, chip_goto):
+            self.assertEqual(test, key)
 
     def test_move_to(self):
         self.f_arm.clear_history()
