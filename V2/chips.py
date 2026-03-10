@@ -40,7 +40,7 @@ def convert_color_to_string(col):
 # Begin project code
 
 TRAVEL_HEIGHT = 200
-SENSOR = [50, 140, 28]
+SENSOR = [50, 140, 20]
 
 
 class Chip:
@@ -90,7 +90,7 @@ class Chip:
         self.move_to(self.sensor_location, hold=True)
 
         self.sensor.set_light(LedStateType.ON)
-        self.sensor.set_light_power(50, PERCENT)
+        # self.sensor.set_light_power(100, PERCENT)
         wait(1, SECONDS)
 
         if self.sensor.is_near_object():
@@ -299,6 +299,7 @@ class Stack:
         # iterate from the top of the original stack; each chip will be
         # dropped onto the appropriate output pile and the order of the
         # original stack naturally becomes inverted in the result.
+        # print(self.chips_from_top_to_bottom)
         for chp in self.chips_from_top_to_bottom:
             placed = False
             for test, location in key:
@@ -340,7 +341,7 @@ class Stack:
     @property
     def chips_from_top_to_bottom(self):
         """
-        to make loops more ledgeble, this function renames an arbatrary [::-1] to somthing easyer to understand
+        to make loops/parsing more ledgeble, this function renames an arbatrary [::-1] to somthing easier to understand
         please note that the chips are returned in top to bottom because if using the move command on a chip, you can only really move the top most one at a time.
         """
         return self.chips[::-1]
@@ -392,13 +393,19 @@ if __name__ == '__main__':
         arm_1,
         optical_3,
         10,
-        [59, 208, 23],
-        2,
+        [75, 208, 0],
+        6,
     )
 
+    first_stack.update_colors([35, 208, 0])
+
+    def print_flat(chp):
+        print(chp)
+        return chp
+
     sorted_stacks = first_stack.sort(key=[
-        [lambda chp: chp.get_color(force_scan=True) == Color.GREEN, [156, 157, 20]],
-        [lambda chp: chp.get_color(force_scan=True) == Color.RED, [156, 30, 20]],
+        [lambda chp: print_flat(chp.get_color()) == print_flat(Color.GREEN), [156, 157, 20]],
+        [lambda chp: print_flat(chp.get_color()) == print_flat(Color.RED), [156, 30, 20]],
         [lambda chp: True, [156, -30, 40]],
     ])
     print(sorted_stacks)
