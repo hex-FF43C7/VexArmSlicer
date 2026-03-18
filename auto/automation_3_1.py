@@ -11,9 +11,9 @@ brain = Brain()
 brain_inertial = Inertial()
 arm10 = Arm(Ports.PORT10)
 signal_tower_6 = SignalTower(Ports.PORT6)
-motor_4 = Motor(Ports.PORT4, False)
+motor_4 = Motor(Ports.PORT4, True)
 motor_2 = Motor(Ports.PORT2, False)
-motor_1 = Motor(Ports.PORT1, False)
+motor_1 = Motor(Ports.PORT1, True)
 object_sensor_a = ObjectDetector(brain.three_wire_port.a)
 
 
@@ -52,6 +52,15 @@ signal_tower_6.set_color(SignalTower.GREEN, SignalTower.ON)
 # Library imports
 from vex import *
 # import asyncio
+try:
+    import utime
+except ImportError:
+    class utime:
+        def ticks_diff(self, *args):
+            raise Exception('import of utime failed')
+
+        def ticks_ms(self):
+            raise Exception('import of utime failed')
 # Begin project code
 
 CHIP_HEIGHT = 10
@@ -63,6 +72,43 @@ def reprint(msg):
     brain.screen.clear_row(1)
     brain.screen.print(msg)
 
+class RetTimer:
+    def __init__(self, wait_ms):
+        self.delay = wait_ms
+        self.last_start_time = None
+
+        self.elapsed = 0
+
+        self._enabled_flag = False
+    
+    def enable(self):
+        if self._enabled_flag == False:
+            self.last_start_time = utime.ticks_ms()
+            self._enabled_flag = True
+        else:
+            self.update()
+    
+
+    def disable(self):
+        self._enabled_flag = False
+    
+    def update(self):
+        now = utime.ticks_ms()
+        self.elapsed += utime.ticks_diff(self.last_start_time, now)
+        self.last_start_time = now
+
+    @property
+    def dn(self):
+        if not self._enabled_flag: #update the timer if its runing
+            self.update()
+
+        if self.elapsed >= self.delay:
+            return True
+        else:
+            return False
+
+    def reset(self):
+        self.elapsed = 0
 
 
 class set_rules:
@@ -77,11 +123,17 @@ class set_rules:
                 rule_list.append(attribute_name)
         
         # raise Exception(rule_list)
+
+        i = 0
         while True:
             self.update_inputs()
             for rule in rule_list:
-                getattr(self, rule)
+                rule_func = getattr(self, rule)
+                rule_result = rule_func()
+                if rule_result != 0:
+                    raise Exception('error in {nam} code: {res}'.format(nam=rule, res=rule_result))
             self.update_outputs()
+            i += 1
     
     def update_inputs(self):
         pass
@@ -115,17 +167,29 @@ class rules(set_rules):
 
 
     def rung_1(self):
+        # reprint('hello world')
+        # reprint(f"((not {self.stop_coil}) and (not {self.stop_sensor_coil}) and ({self.start_coil} or {self.run_coil}))")
         if ((not self.stop_coil) and (not self.stop_sensor_coil) and (self.start_coil or self.run_coil)):
             self.run_coil = 1
         else:
             self.run_coil = 0
 
+        return 0
+
     def rung_2(self):
         self.track_coil = bool(self.run_coil)
 
+        return 0
 
 
 
 if __name__ == '__main__':
     daemon = rules()
     daemon.run()
+
+    # t = RetTimer(5000)
+    # reprint('started')
+    # while not t.dn:
+    #     t.enable()
+    
+    # reprint('end')
