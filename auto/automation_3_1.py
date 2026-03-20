@@ -86,20 +86,31 @@ class RetTimer:
             self.last_start_time = utime.ticks_ms()
             self._enabled_flag = True
         else:
-            self.update()
+            # self.update()
+            pass
+        
     
 
     def disable(self):
         self._enabled_flag = False
     
     def update(self):
-        now = utime.ticks_ms()
-        self.elapsed += utime.ticks_diff(self.last_start_time, now)
-        self.last_start_time = now
+        if self._enabled_flag:
+            now = utime.ticks_ms()
 
+            if self.last_start_time is None:
+                self.last_Start_time = now
+
+            else:
+                dif = utime.ticks_diff(now, self.last_start_time)
+                
+                if not now == self.last_start_time:
+                    self.elapsed += dif
+                    self.last_start_time = now
+        
     @property
     def dn(self):
-        if not self._enabled_flag: #update the timer if its runing
+        if self._enabled_flag: #update the timer if its runing
             self.update()
 
         if self.elapsed >= self.delay:
@@ -184,12 +195,12 @@ class rules(set_rules):
 
 
 if __name__ == '__main__':
-    daemon = rules()
-    daemon.run()
+    # daemon = rules()
+    # daemon.run()
 
-    # t = RetTimer(5000)
-    # reprint('started')
-    # while not t.dn:
-    #     t.enable()
+    t = RetTimer(5000)
+    reprint('started')
+    while not t.dn:
+        t.enable()
     
-    # reprint('end')
+    reprint('end')
