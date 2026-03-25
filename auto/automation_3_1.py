@@ -15,6 +15,7 @@ motor_4 = Motor(Ports.PORT4, True)
 motor_2 = Motor(Ports.PORT2, False)
 motor_1 = Motor(Ports.PORT1, True)
 object_sensor_a = ObjectDetector(brain.three_wire_port.a)
+pneumatic_9 = Pneumatic(Ports.PORT9)
 
 
 # Wait for sensor(s) to fully initialize
@@ -160,6 +161,14 @@ class rules(set_rules):
         self.run_coil = 0
         self.track_coil = 0
 
+        self.run_pump = 0
+        self.pump_on_timer = RetTimer(5000)
+        self.pump_off_timer = RetTimer(5000)
+
+        self.chip_cylynder_active = False
+        self.chip_cylynder_extend = RetTimer(4000)
+        self.chip_cylynder_retract = RetTimer(4000)
+
     def update_inputs(self):
         self.start_coil = bool(brain.buttonLeft.pressing())
         self.stop_coil = bool(brain.buttonRight.pressing())
@@ -167,6 +176,11 @@ class rules(set_rules):
 
 
     def update_outputs(self):
+        if self.run_pump:
+            pneumatic_9.pump_on()
+        else:
+            pneumatic_9.pump_off()
+
         if self.track_coil:
             motor_1.spin(FORWARD)
             motor_2.spin(FORWARD)
@@ -180,7 +194,7 @@ class rules(set_rules):
     def rung_1(self):
         # reprint('hello world')
         # reprint(f"((not {self.stop_coil}) and (not {self.stop_sensor_coil}) and ({self.start_coil} or {self.run_coil}))")
-        if ((not self.stop_coil) and (not self.stop_sensor_coil) and (self.start_coil or self.run_coil)):
+        if ((not self.stop_coil) and (self.start_coil or self.run_coil)):
             self.run_coil = 1
         else:
             self.run_coil = 0
@@ -192,15 +206,62 @@ class rules(set_rules):
 
         return 0
 
+    def rung_3(self):
+        if (not self.pump_on_timer.dn) and (self.run_pump or self.pump_off_timer.dn):
+            self.run_pump = True
+        else:
+            self.run_pump = False
+        
+        return 0
+            
+    
+    def rung_4(self):
+        if self.run_pump:
+            self.pump_on_timer.enable()
+
+            self.pump_off_timer.disable()
+            self.pump_off_timer.reset()
+        else:
+            self.pump_off_timer.enable()
+
+            self.pump_on_timer.disable()
+            self.pump_on_timer.reset()
+
+        return 0 
+        
+    def rung_5(self):
+        if (self.start_coil) and (not self.chip_cylynder_extend.dn) and (self.chip_cylynder_active or self.chip_cylynder_retract.dn):
+            self.chip_cylynder_active = True
+        else:
+            self.chip_cylynder_active = False
+        
+        return 0
+            
+    
+    def rung_6(self):
+        if self.chip_cylynder_active:
+            self.chip_cylynder_extend.enable()
+
+            self.chip_cylynder_retract.disable()
+            self.chip_cylynder_retract.reset()
+        else:
+            self.chip_cylynder_retract.enable()
+
+            self.chip_cylynder_extend.disable()
+            self.chip_cylynder_extend.reset()
+
+        return 0 
+        
+
 
 
 if __name__ == '__main__':
-    # daemon = rules()
-    # daemon.run()
+    daemon = rules()
+    daemon.run()
 
-    t = RetTimer(5000)
-    reprint('started')
-    while not t.dn:
-        t.enable()
+    # t = RetTimer(5000)
+    # reprint('started')
+    # while not t.dn:
+    #     t.enable()
     
-    reprint('end')
+    # reprint('end')
