@@ -190,6 +190,10 @@ class rules(set_rules):
             motor_2.stop()
             motor_4.stop()
 
+        if self.chip_cylynder_active:
+            pneumatic_9.extend(CYLINDER4)
+        else:
+            pneumatic_9.retract(CYLINDER4)
 
     def rung_1(self):
         # reprint('hello world')
