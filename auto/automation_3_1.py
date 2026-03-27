@@ -16,6 +16,7 @@ motor_2 = Motor(Ports.PORT2, False)
 motor_1 = Motor(Ports.PORT1, True)
 object_sensor_a = ObjectDetector(brain.three_wire_port.a)
 pneumatic_9 = Pneumatic(Ports.PORT9)
+optical_7 = Optical(Ports.PORT7)
 
 
 # Wait for sensor(s) to fully initialize
@@ -33,6 +34,30 @@ def initializeRandomSeed():
 # Initialize random seed 
 initializeRandomSeed()
 
+
+# Color to String Helper
+def convert_color_to_string(col):
+    if col == Color.RED:
+        return "red"
+    if col == Color.GREEN:
+        return "green"
+    if col == Color.BLUE:
+        return "blue"
+    if col == Color.WHITE:
+        return "white"
+    if col == Color.YELLOW:
+        return "yellow"
+    if col == Color.ORANGE:
+        return "orange"
+    if col == Color.PURPLE:
+        return "purple"
+    if col == Color.CYAN:
+        return "cyan"
+    if col == Color.BLACK:
+        return "black"
+    if col == Color.TRANSPARENT:
+        return "transparent"
+    return ""
 # Initialize the 6-Axis Arm
 arm10.initialize_arm()
 
@@ -162,17 +187,41 @@ class rules(set_rules):
         self.track_coil = 0
 
         self.run_pump = 0
-        self.pump_on_timer = RetTimer(5000)
-        self.pump_off_timer = RetTimer(5000)
+        self.pump_on_timer = RetTimer(4_500)
+        self.pump_off_timer = RetTimer(10_000)
 
         self.chip_cylynder_active = False
-        self.chip_cylynder_extend = RetTimer(4000)
-        self.chip_cylynder_retract = RetTimer(4000)
+        self.chip_cylynder_extend = RetTimer(2000)
+        self.chip_cylynder_retract = RetTimer(3000)
+
+        self.color_queue = [] #[[timer, state],  ...  ] go through and if the most recent timer is done, change gate state to the state and pop the old pair
+        self.gate_state = 0 # 0=gate_one 1=gate_two 2=excess
+        self.chip_added_coil = 0
+
+        self.manifest = [
+            {
+                "STATE": 0,
+                "RED": 3,
+                "GREEN": 1,
+            },
+            {
+                "STATE": 1,
+                "RED": 1,
+                "GREEN": 3,
+            },
+        ]
+
+        optical_7.set_light(LedStateType.ON)
+        self.color_sensor_background = []
+        self.color_sensor_background.append(optical_7.color())
+
 
     def update_inputs(self):
         self.start_coil = bool(brain.buttonLeft.pressing())
         self.stop_coil = bool(brain.buttonRight.pressing())
         self.stop_sensor_coil = bool(object_sensor_a.is_object_detected())
+        self.color_detected = optical_7.color()
+        self.color_object_detected_coil = not optical_7.color() in self.color_sensor_background
 
 
     def update_outputs(self):
@@ -194,6 +243,19 @@ class rules(set_rules):
             pneumatic_9.extend(CYLINDER4)
         else:
             pneumatic_9.retract(CYLINDER4)
+        
+        if self.gate_state == 0:
+            pneumatic_9.extend(CYLINDER2)
+            pneumatic_9.retract(CYLINDER3)
+
+        elif self.gate_state == 1:
+            pneumatic_9.retract(CYLINDER2)
+            pneumatic_9.extend(CYLINDER3)
+
+        elif self.gate_state == 2:
+            pneumatic_9.retract(CYLINDER2)
+            pneumatic_9.retract(CYLINDER3)
+            
 
     def rung_1(self):
         # reprint('hello world')
@@ -234,7 +296,7 @@ class rules(set_rules):
         return 0 
         
     def rung_5(self):
-        if (self.start_coil) and (not self.chip_cylynder_extend.dn) and (self.chip_cylynder_active or self.chip_cylynder_retract.dn):
+        if (self.run_coil) and (not self.chip_cylynder_extend.dn) and (self.chip_cylynder_active or self.chip_cylynder_retract.dn):
             self.chip_cylynder_active = True
         else:
             self.chip_cylynder_active = False
@@ -255,7 +317,48 @@ class rules(set_rules):
             self.chip_cylynder_extend.reset()
 
         return 0 
+
+    def rung_7(self):
+        #add to queue
+        if self.color_object_detected_coil and not self.chip_added_coil:
+
+            self.chip_added_coil = True
+            # print(self.color_detected)
+            if self.color_detected == Color.RED:
+                for warehouse in self.manifest:
+                    if warehouse['RED'] > 0:
+                        warehouse['RED'] -= 1
+                        self.color_queue.append([RetTimer(5000), warehouse["STATE"]])
+                        self.color_queue[-1][0].enable()
+                        break
+                    #add red and update manifest
+
+            elif self.color_detected == Color.GREEN:
+                for warehouse in self.manifest:
+                    if warehouse['GREEN'] > 0:
+                        warehouse['GREEN'] -= 1
+                        self.color_queue.append([RetTimer(6000), warehouse["STATE"]])
+                        self.color_queue[-1][0].enable()
+                        break
+            else:
+                self.color_sensor_background.append(self.color_detected)
+                print(self.color_sensor_background)
+                
+                # return "UNKNOWN COLOR: {}, {}".format(self.color_detected, self.color_object_detected_coil)
+
+        elif not self.color_object_detected_coil and self.chip_added_coil:
+            self.chip_added_coil = False
+
+        return 0 
         
+    
+    def rung_8(self):
+        if self.color_queue:
+            if self.color_queue[0][0].dn:
+                self.gate_state = self.color_queue.pop(0)[-1]
+                # print(self.gate_state)
+        
+        return 0
 
 
 
