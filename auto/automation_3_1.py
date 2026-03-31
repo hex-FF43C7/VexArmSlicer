@@ -241,7 +241,6 @@ class rules(set_rules):
         
 
         self.arm_in_motion = 0
-        self.arm_go = 0
 
         arm10.set_end_effector_type(Arm.MAGNET)
         arm10.set_end_effector_magnet(False)
@@ -281,25 +280,22 @@ class rules(set_rules):
             pneumatic_9.retract(CYLINDER4)
         
         if self.gate_state == 0:
-            self.arm_go = 0
             pneumatic_9.extend(CYLINDER2)
             pneumatic_9.retract(CYLINDER3)
         elif self.gate_state == 1:
-            self.arm_go = 0
             pneumatic_9.retract(CYLINDER2)
             pneumatic_9.extend(CYLINDER3)
         elif self.gate_state == 2:
             pneumatic_9.retract(CYLINDER2)
             pneumatic_9.retract(CYLINDER3)
         elif self.gate_state == 99:
-            self.arm_go = 0
             pneumatic_9.retract(CYLINDER2)
             pneumatic_9.retract(CYLINDER3)
 
     def arm_rung(self):
-        if self.gate_state == 2 and not self.arm_go:
-            self.arm_go = 1
+        if self.gate_state == 2:
             _thread.start_new_thread(arm_non_blocking, ())
+            self.gate_state = 2.5
         return 0
         
             
