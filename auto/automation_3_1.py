@@ -80,7 +80,10 @@ from vex import *
 # import asyncio
 try:
     import utime
+    import _thread
 except ImportError:
+    class _thread:
+        pass
     class utime:
         def ticks_diff(self, *args):
             raise Exception('import of utime failed')
@@ -97,6 +100,20 @@ def reprint(msg):
     brain.screen.set_cursor(1, 1)
     brain.screen.clear_row(1)
     brain.screen.print(msg)
+
+def arm_non_blocking():
+    arm10.set_end_effector_magnet(True)
+    wait(0.7, SECONDS)
+    arm10.move_to(100, 107, 80)
+    arm10.move_to(20, 130, 80)
+    arm10.move_to(20, 130, 40)
+
+    arm10.set_end_effector_magnet(False)
+
+    arm10.move_to(20, 130, 80)
+    arm10.move_to(100, 107, 80)
+    arm10.move_to(100, 107, 42)
+
 
 class RetTimer:
     def __init__(self, wait_ms):
@@ -195,14 +212,19 @@ class rules(set_rules):
         self.chip_cylynder_retract = RetTimer(3000)
 
         self.color_queue = [] #[[timer, state],  ...  ] go through and if the most recent timer is done, change gate state to the state and pop the old pair
-        self.gate_state = 0 # 0=gate_one 1=gate_two 2=excess
+        self.gate_state = 99 # 0=gate_one 1=gate_two 2=arm 99=excess
         self.chip_added_coil = 0
 
         self.manifest = [
             {
                 "STATE": 0,
-                "RED": 3,
+                "RED": 2,
+                "GREEN": 0,
+            },
+            {
+                "STATE": 2,
                 "GREEN": 1,
+                "RED": 1, 
             },
             {
                 "STATE": 1,
@@ -215,6 +237,19 @@ class rules(set_rules):
         self.color_sensor_background = []
         self.color_sensor_background.append(optical_7.color())
 
+        motor_1.set_velocity(100, PERCENT) #exit conveyer needed a boost
+        
+
+        self.arm_in_motion = 0
+        self.arm_go = 0
+
+        arm10.set_end_effector_type(Arm.MAGNET)
+        arm10.set_end_effector_magnet(False)
+
+        arm10.move_to(100, 107, 80)
+        arm10.move_to(100, 107, 42)
+
+
 
     def update_inputs(self):
         self.start_coil = bool(brain.buttonLeft.pressing())
@@ -222,6 +257,7 @@ class rules(set_rules):
         self.stop_sensor_coil = bool(object_sensor_a.is_object_detected())
         self.color_detected = optical_7.color()
         self.color_object_detected_coil = not optical_7.color() in self.color_sensor_background
+        self.arm_in_motion = not bool(arm10.is_done())
 
 
     def update_outputs(self):
@@ -245,16 +281,29 @@ class rules(set_rules):
             pneumatic_9.retract(CYLINDER4)
         
         if self.gate_state == 0:
+            self.arm_go = 0
             pneumatic_9.extend(CYLINDER2)
             pneumatic_9.retract(CYLINDER3)
-
         elif self.gate_state == 1:
+            self.arm_go = 0
             pneumatic_9.retract(CYLINDER2)
             pneumatic_9.extend(CYLINDER3)
-
         elif self.gate_state == 2:
             pneumatic_9.retract(CYLINDER2)
             pneumatic_9.retract(CYLINDER3)
+        elif self.gate_state == 99:
+            self.arm_go = 0
+            pneumatic_9.retract(CYLINDER2)
+            pneumatic_9.retract(CYLINDER3)
+
+    def arm_rung(self):
+        if self.gate_state == 2 and not self.arm_go:
+            self.arm_go = 1
+            _thread.start_new_thread(arm_non_blocking, ())
+        return 0
+        
+            
+            
             
 
     def rung_1(self):
@@ -328,18 +377,24 @@ class rules(set_rules):
                 for warehouse in self.manifest:
                     if warehouse['RED'] > 0:
                         warehouse['RED'] -= 1
-                        self.color_queue.append([RetTimer(5000), warehouse["STATE"]])
+                        self.color_queue.append([RetTimer(4500), warehouse["STATE"]])
                         self.color_queue[-1][0].enable()
                         break
+                else:
+                    self.color_queue.append([RetTimer(4500), 99])
+                    self.color_queue[-1][0].enable()
                     #add red and update manifest
 
             elif self.color_detected == Color.GREEN:
                 for warehouse in self.manifest:
                     if warehouse['GREEN'] > 0:
                         warehouse['GREEN'] -= 1
-                        self.color_queue.append([RetTimer(6000), warehouse["STATE"]])
+                        self.color_queue.append([RetTimer(4500), warehouse["STATE"]])
                         self.color_queue[-1][0].enable()
                         break
+                else:
+                    self.color_queue.append([RetTimer(4500), 99])
+                    self.color_queue[-1][0].enable()
             else:
                 self.color_sensor_background.append(self.color_detected)
                 print(self.color_sensor_background)
