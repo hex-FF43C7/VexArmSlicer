@@ -104,13 +104,13 @@ def reprint(msg):
 def arm_non_blocking():
     arm10.set_end_effector_magnet(True)
     wait(0.7, SECONDS)
-    arm10.move_to(100, 107, 80)
+    # arm10.move_to(100, 107, 80)
     arm10.move_to(20, 130, 80)
-    arm10.move_to(20, 130, 40)
+    # arm10.move_to(20, 130, 40)
 
     arm10.set_end_effector_magnet(False)
 
-    arm10.move_to(20, 130, 80)
+    # arm10.move_to(20, 130, 80)
     arm10.move_to(100, 107, 80)
     arm10.move_to(100, 107, 42)
 
@@ -205,11 +205,11 @@ class rules(set_rules):
 
         self.run_pump = 0
         self.pump_on_timer = RetTimer(4_500)
-        self.pump_off_timer = RetTimer(10_000)
+        self.pump_off_timer = RetTimer(9_000)
 
         self.chip_cylynder_active = False
         self.chip_cylynder_extend = RetTimer(2000)
-        self.chip_cylynder_retract = RetTimer(3000)
+        self.chip_cylynder_retract = RetTimer(2000)
 
         self.color_queue = [] #[[timer, state],  ...  ] go through and if the most recent timer is done, change gate state to the state and pop the old pair
         self.gate_state = 99 # 0=gate_one 1=gate_two 2=arm 99=excess
